@@ -9,7 +9,8 @@ from ..Models import (
     SensorType,
     Equipment,
     IndividualList,
-    Base
+    Base,
+    IndivLocationList
     )
 from ..GenericObjets.FrontModules import FrontModules
 from ..GenericObjets import ListObjectWithDynProp
@@ -25,6 +26,7 @@ from pyramid.security import NO_PERMISSION_REQUIRED
 from traceback import print_exc
 from collections import OrderedDict
 from ..utils.distance import haversine
+from ..utils.generator import Generator
 
 prefix = 'individuals'
 
@@ -33,7 +35,6 @@ prefix = 'individuals'
 @view_config(route_name= prefix+'/id/history/action', renderer='json', request_method = 'GET', permission = NO_PERMISSION_REQUIRED)
 @view_config(route_name= prefix+'/id/equipment/action', renderer='json', request_method = 'GET', permission = NO_PERMISSION_REQUIRED)
 def actionOnIndividuals(request):
-    print ('\n*********************** Action **********************\n')
     dictActionFunc = {
     'count' : count_,
     'forms' : getForms,
@@ -47,8 +48,6 @@ def actionOnIndividuals(request):
 
 def count_ (request = None,listObj = None) :
     session = request.dbsession
-
-    print('*****************  INDIVIDUAL COUNT***********************')
     ModuleType = 'IndivFilter'
     moduleFront  = session.query(FrontModules).filter(FrontModules.Name == ModuleType).one()
     if request is not None : 
@@ -59,47 +58,48 @@ def count_ (request = None,listObj = None) :
                 searchInfo['criteria'] = [obj for obj in data['criteria'] if obj['Value'] != str(-1) ]
         else : 
             searchInfo = {'criteria':None}
-        
         listObj = ListObjectWithDynProp(Individual,moduleFront)
         count = listObj.count(searchInfo = searchInfo)
     else : 
         count = listObj.count()
-
-    print(count)
     return count 
 
 def getFilters (request):
     session = request.dbsession
+    if 'objType' in request.params :
+        objType = request.params['objType']
+    else : 
+        objType = 1
 
     ModuleType = 'IndivFilter'
-    filtersList = Individual().GetFilters(ModuleType)
+    filtersList = Individual(FK_IndividualType = objType).GetFilters(ModuleType)
     filters = {}
     for i in range(len(filtersList)) :
         filters[str(i)] = filtersList[i]
-    transaction.commit()
     return filters
 
 def getForms(request) :
     session = request.dbsession
-
     typeIndiv = request.params['ObjectType']
-    print('***************** GET FORMS ***********************')
     ModuleName = 'IndivForm'
     Conf = session.query(FrontModules).filter(FrontModules.Name==ModuleName ).first()
     newIndiv = Individual(FK_IndividualType = typeIndiv)
     newIndiv.init_on_load()
     schema = newIndiv.GetDTOWithSchema(Conf,'edit')
-    transaction.commit()
     return schema
 
 def getFields(request) :
     session = request.dbsession
 
+    if 'objType' in request.params :
+        objType = request.params['objType']
+    else : 
+        objType = 1
+
     ModuleType = request.params['name']
     if ModuleType == 'default' :
         ModuleType = 'IndivFilter'
-    cols = Individual().GetGridFields(ModuleType)
-    transaction.commit()
+    cols = Individual(FK_IndividualType = objType).GetGridFields(ModuleType)
     return cols
 
 def getIndividualType(request):
@@ -113,8 +113,6 @@ def getIndividualType(request):
 @view_config(route_name= prefix+'/id', renderer='json', request_method = 'GET')
 def getIndiv(request):
     session = request.dbsession
-
-    print('***************** GET INDIVIDUAL ***********************')
     id = request.matchdict['id']
     curIndiv = session.query(Individual).get(id)
     curIndiv.LoadNowValues()
@@ -126,7 +124,6 @@ def getIndiv(request):
             DisplayMode = request.params['DisplayMode']
         except : 
             DisplayMode = 'display'
-        
         Conf = session.query(FrontModules).filter(FrontModules.Name=='IndivForm').first()
         response = curIndiv.GetDTOWithSchema(Conf,DisplayMode)
 
@@ -139,7 +136,7 @@ def getIndiv(request):
 
         for row in dataResult:
             geoJson.append({'type':'Feature', 'properties':{'type':row['type_']
-                , 'sensor':row['UnicIdentifier'],'date':row['Date']}
+                , 'sensor':row['UnicIdentifier'],'date':row['Date'],'ID':row['ID']}
                 , 'geometry':{'type':'Point', 'coordinates':[row['LAT'],row['LON']]}})
         result = {'type':'FeatureCollection', 'features':geoJson}
         response = result
@@ -168,23 +165,20 @@ def getIndiv(request):
     #     response = result
     # else : 
     #     response  = curIndiv.GetFlatObject()
-
-    transaction.commit()
     return response
 
 # ------------------------------------------------------------------------------------------------------------------------- #
 @view_config(route_name= prefix+'/id/history', renderer='json', request_method = 'GET')
 def getIndivHistory(request):
     session = request.dbsession
-
-
-    #128145
     id = request.matchdict['id']
+
     tableJoin = join(IndividualDynPropValue,IndividualDynProp
         ,IndividualDynPropValue.FK_IndividualDynProp == IndividualDynProp.ID)
     query = select([IndividualDynPropValue,IndividualDynProp.Name]).select_from(tableJoin).where(
         IndividualDynPropValue.FK_Individual == id
         ).order_by(desc(IndividualDynPropValue.StartDate))
+
     result = session.execute(query).fetchall()
     response = []
     for row in result:
@@ -204,21 +198,20 @@ def getIndivHistory(request):
 @view_config(route_name= prefix+'/id/equipment', renderer='json', request_method = 'GET')
 def getIndivEquipment(request):
     session = request.dbsession
-
-
     id_indiv = request.matchdict['id']
-    joinTable = join(Equipment,Sensor, Equipment.FK_Sensor == Sensor.ID
-        ).join(SensorType,Sensor.FK_SensorType == SensorType.ID)
-    query = select([Equipment.StartDate,SensorType.Name.label('Type'),Sensor.UnicIdentifier,Equipment.Deploy]).select_from(joinTable
-        ).where(Equipment.FK_Individual == id_indiv).order_by(desc(Equipment.StartDate))
+
+    table = Base.metadata.tables['IndividualEquipment']
+    joinTable = join(table,Sensor, table.c['FK_Sensor'] == Sensor.ID)
+    joinTable = join(joinTable,SensorType, Sensor.FK_SensorType == SensorType.ID)
+    query = select([table.c['StartDate'],table.c['EndDate'],Sensor.UnicIdentifier,table.c['FK_Individual'],SensorType.Name.label('Type')]
+        ).select_from(joinTable
+        ).where(table.c['FK_Individual'] == id_indiv
+        ).order_by(desc(table.c['StartDate']))
+
     result = session.execute(query).fetchall()
     response = []
     for row in result:
         curRow = OrderedDict(row)
-        if curRow['Deploy'] == 1 : 
-            curRow['Deploy'] = 'Deploy'
-        else : 
-            curRow['Deploy'] = 'Remove'
         response.append(curRow)
 
     return response
@@ -227,35 +220,29 @@ def getIndivEquipment(request):
 @view_config(route_name= prefix+'/id', renderer='json', request_method = 'DELETE',permission = NO_PERMISSION_REQUIRED)
 def deleteIndiv(request):
     session = request.dbsession
-
     id_ = request.matchdict['id']
     curIndiv = session.query(Individual).get(id_)
     session.delete(curIndiv)
-    transaction.commit()
+
     return True
 
 # ------------------------------------------------------------------------------------------------------------------------- #
 @view_config(route_name= prefix+'/id', renderer='json', request_method = 'PUT')
 def updateIndiv(request):
     session = request.dbsession
-
-    print('*********************** UPDATE Individual *****************')
     data = request.json_body
     id = request.matchdict['id']
     curIndiv = session.query(Individual).get(id)
     curIndiv.LoadNowValues()
     curIndiv.UpdateFromJson(data)
-    transaction.commit()
     return {}
 
 # ------------------------------------------------------------------------------------------------------------------------- #
 @view_config(route_name= prefix  + '/insert', renderer='json', request_method = 'POST')
 def insertIndiv(request):
     session = request.dbsession
-
     data = request.json_body
     if not isinstance(data,list):
-        print('_______INsert ROW *******')
         return insertOneNewIndiv(request)
     else :
         print('_______INsert LIST')
@@ -265,33 +252,27 @@ def insertIndiv(request):
 # ------------------------------------------------------------------------------------------------------------------------- #
 def insertOneNewIndiv (request) :
     session = request.dbsession
-
     data = {}
     for items , value in request.json_body.items() :
         if value != "" :
             data[items] = value
 
-    #newIndiv = Individual(FK_IndividualType = data['FK_IndividualType'], creator = request.authenticated_userid)
     indivType = int(data['FK_IndividualType'])
-    print(data)
     newIndiv = Individual(FK_IndividualType = indivType , creationDate = datetime.now(),Original_ID = '0')
     newIndiv.IndividualType = session.query(IndividualType).filter(IndividualType.ID==indivType).first()
     newIndiv.init_on_load()
     newIndiv.UpdateFromJson(data)
-    print (newIndiv.__dict__)
     session.add(newIndiv)
     session.flush()
-    # transaction.commit()
+
     return {'ID': newIndiv.ID}
 
 # ------------------------------------------------------------------------------------------------------------------------- #
 @view_config(route_name= prefix, renderer='json', request_method = 'GET', permission = NO_PERMISSION_REQUIRED)
 def searchIndiv(request):
     session = request.dbsession
-
     data = request.params.mixed()
-    print('*********data*************')
-    print(data)
+
     searchInfo = {}
     searchInfo['criteria'] = []
     if 'criteria' in data: 
@@ -305,33 +286,102 @@ def searchIndiv(request):
 
     ModuleType = 'IndivFilter'
     moduleFront  = session.query(FrontModules).filter(FrontModules.Name == ModuleType).one()
-    print('**criteria********' )
-    print(searchInfo['criteria'])
-    start = datetime.now()
+
     listObj = IndividualList(moduleFront)
     dataResult = listObj.GetFlatDataList(searchInfo)
-
-    stop = datetime.now()
-    print ('______ TIME to get DATA : ')
-    print (stop-start)
-    start = datetime.now()
     countResult = listObj.count(searchInfo)
-    print ('______ TIME to get Count : ')
-    stop = datetime.now()
-    print (stop-start)
 
     result = [{'total_entries':countResult}]
     result.append(dataResult)
-    transaction.commit()
     return result
 
 
-def getIndivEquipmentAtDate(request):
+@view_config(route_name= prefix+'/id/location/action', renderer='json', request_method = 'GET', permission = NO_PERMISSION_REQUIRED)
+def actionOnIndividualsLoc(request):
+    dictActionFunc = {
+    'getFields': getFieldsLoc,
+    'getFilters': getFiltersLoc,
+    }
+    actionName = request.matchdict['action']
+    return dictActionFunc[actionName](request)
+
+def getFieldsLoc(request) :
     session = request.dbsession
 
+    gene = IndivLocationList('Individual_Location',session,None)
+    return gene.get_col()
+# ------------------------------------------------------------------------------------------------------------------------- #
+@view_config(route_name= prefix+'/id/location', renderer='json', request_method = 'GET',permission=NO_PERMISSION_REQUIRED)
+def getIndivLocation(request):
 
-    data = request.json_body
+    id_ = request.matchdict['id']
+    session = request.dbsession
+    gene = IndivLocationList('Individual_Location',session,id_)
+    response = None
 
+    data = request.params.mixed()
+    if 'criteria' in data: 
+        criteria = json.loads(data['criteria'])
+    else : 
+        criteria = {}
+    
+    if 'per_page' in data:
+        offset = json.loads(data['offset'])
+        per_page = json.loads(data['per_page'])
+        order_by = json.loads(data['order_by'])
+    else :
+        offset=0
+        per_page=20
+        order_by=[]
+
+    if 'geo' in request.params :
+        result = gene.get_geoJSON(criteria,['ID','UnicIdentifier','Date','type_'])
+    else:
+        result = gene.search(criteria,offset=offset,per_page=per_page,order_by=order_by)
+
+
+    # ************ POC Indiv location PLayer  **************** 
+
+    # if 'geoDynamic' in request.params :
+    #     geoJson=[]
+    #     joinTable = join(Individual_Location, Sensor, Individual_Location.FK_Sensor == Sensor.ID)
+    #     stmt = select([Ind ividual_Location,Sensor.UnicIdentifier]).select_from(joinTable
+    #         ).where(Individual_Location.FK_Individual == id
+    #         ).where(Individual_Location.type_ == 'GSM').order_by(asc(Individual_Location.Date))
+    #     dataResult = session.execute(stmt).fetchall()
+        
+    #     df = pd.DataFrame.from_records(dataResult, columns=dataResult[0].keys(), coerce_float=True)
+    #     X1 = df.iloc[:-1][['LAT', 'LON']].values
+    #     X2 = df.iloc[1:][['LAT', 'LON']].values
+    #     df['dist'] = np.append(haversine(X1, X2), 0).round(3)
+    #     # Compute the speed
+    #     df['speed'] = (df['dist'] / ((df['Date'] - df['Date'].shift(-1)).fillna(1) / np.timedelta64(1, 'h'))).round(3)
+    #     df['Date'] = df['Date'].apply(lambda row: np.datetime64(row).astype(datetime)) 
+
+    #     for i in range(df.shape[0]):
+    #         geoJson.append({'type':'Feature', 'properties':{'type':df.loc[i,'type_']
+    #             , 'sensor':df.loc[i,'UnicIdentifier'],'speed':df.loc[i,'speed'],'date':df.loc[i,'Date']}
+    #             , 'geometry':{'type':'Point', 'coordinates':[df.loc[i,'LAT'],df.loc[i,'LON']]}})
+    #     result = {'type':'FeatureCollection', 'features':geoJson}
+    #     response = result
+    # else : 
+    #     response  = curIndiv.GetFlatObject()
+
+    return result
+
+
+@view_config(route_name= prefix+'/id/location', renderer='json', request_method = 'DELETE',permission=NO_PERMISSION_REQUIRED)
+def delIndivLocationList(request):
+    session = request.dbsession
+    IdList = request.params['IDs']
+    session.query(Individual_Location).filter(Individual_Location.ID.in_(IdList)).delete(synchronize_session=False)
+
+
+@view_config(route_name= prefix+'/id/location/id_loc', renderer='json', request_method = 'GET',permission=NO_PERMISSION_REQUIRED)
+def delIndivLocation(request):
+    session = request.dbsession
+    Id = request.matchdict['id_loc']
+    session.query(Individual_Location).filter(Individual_Location.ID == Id).delete(synchronize_session=False)
 
 
 

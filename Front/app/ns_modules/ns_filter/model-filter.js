@@ -2,7 +2,7 @@ define([
   'jquery',
   'underscore',
   'backbone',
-  'backbone_forms',
+  'backbone-forms',
   'moment',
   'requirejs-text!./Templates/tpl-filters.html',
   'requirejs-text!./Templates/tpl-CheckBoxes.html',
@@ -76,6 +76,7 @@ define([
 
     initFilters: function (data) {
       var form;
+      var _this = this;
       for (var key in data) {
         form = this.initFilter(data[key]);
         this.filterContainer.append(form.el);
@@ -85,9 +86,17 @@ define([
             $(this).prop('checked', true);
           });
         }
+
+        
         this.forms.push(form);
         this.filterLoaded();
       };
+            var sss = this;
+      $(this.filterContainer).find('input').on('keypress', function(e) {
+          if( e.keyCode == 13  ){
+             _this.update();
+          }
+        });
     },
 
     addFilter: function(data) {

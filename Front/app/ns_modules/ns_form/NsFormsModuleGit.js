@@ -3,7 +3,7 @@ define([
   'underscore',
   'backbone',
   'marionette',
-  'backbone_forms',
+  'backbone-forms',
   'sweetAlert',
   'requirejs-text!./Templates/NsFormsModule.html',
   'fancytree',
@@ -23,6 +23,13 @@ define([
     redirectAfterPost: '',
     displayDelete: true,
 
+    events : {
+      'keypress input' : 'evt'
+
+    },
+    evt : function(){
+      alert();
+    },
     extendsBBForm: function(){
       Backbone.Form.validators.errMessages.required = '';
       Backbone.Form.Editor.prototype.initialize = function(options){
@@ -50,6 +57,7 @@ define([
 
         //Main attributes
         this.$el.attr('id', this.id);
+        //bug with same name
         this.$el.attr('name', this.getName());
         if (schema.editorClass) this.$el.addClass(schema.editorClass);
         if (schema.editorAttrs) this.$el.attr(schema.editorAttrs);
@@ -133,6 +141,10 @@ define([
       if(options.savingError) {
         this.savingError =options.savingError;
       }
+
+      $(this.BBForm).on( "click", function() {
+        alert();
+      });
     },
 
     initModel: function () {
@@ -184,13 +196,24 @@ define([
     },
 
     showForm: function (){
+      var self = this;
+      var display = 'form';
       this.BBForm.render();
+      var el = this.BBForm.el;
+      if(display=='table'){
+        el = this.getHtmlTable(el);
+      }
+      //console.log(this.BBForm.el);
       // Call extendable function before the show call
       this.BeforeShow();
       var _this = this;
 
-      this.formRegion.html(this.BBForm.el);
-
+      this.formRegion.html(el); //this.formRegion.html(this.BBForm.el);
+      $(this.formRegion).find('input').on("keypress", function(e) {
+        if( e.which == 13 ){
+          self.butClickSave(e);
+        }
+      });
       if(this.buttonRegion[0]){
         this.buttonRegion.forEach(function (entry) {
           _this.buttonRegion[0].html(_this.template);
@@ -309,8 +332,7 @@ define([
           
         }
       }else{
-        console.log(errors);
-        _this.BBForm.$el.find('.error:first').find('input,select').focus();
+        _this.BBForm.$el.find('.error:first').trigger('focus');
         return false;
       }
       this.afterSavingModel();
@@ -472,6 +494,26 @@ define([
         }
       });
     },
+    getHtmlTable : function(el){
+      var headtr = '<tr>';
+      var bodytr = '<tr>'; 
+      $(el).find('fieldset').each(function( i ) {
+            var j = 0 ;
+            $(this).children().each(function(){
+                // check if we have a  form field 
+                var labelElem = $(this).find('label')[0];
+                if(labelElem) {
+                  headtr += '<td>' + labelElem.textContent +'</td>';
+                  var content = $(this).children('div')[0].outerHTML;
+                   bodytr += '<td>' + content +'</td>';
+                }
+            });
+      });
+      headtr += '</tr>';
+      bodytr += '</tr>';
+      var table = '<table id="formTable"><thead>' + headtr +'</thead>  <tbody> ' + bodytr +'</tbody></table>';
+      return table;
+    }
   });
 
 });

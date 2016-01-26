@@ -46,7 +46,7 @@ DataRfidasFile = Table('V_dataRFID_as_file', Base.metadata, autoload=True)
 
 # ------------------------------------------------------------------------------------------------------------------------- #
 # List all PTTs having unchecked locations, with individual id and number of locations.
-@view_config(route_name=route_prefix+'uncheckedDatas',renderer='json', permission = NO_PERMISSION_REQUIRED)
+@view_config(route_name=route_prefix+'uncheckedDatas',renderer='json')
 def type_unchecked_list(request):
     session = request.dbsession
 
@@ -84,7 +84,7 @@ def unchecked_rfid(request):
     return result
 
 # ------------------------------------------------------------------------------------------------------------------------- #
-@view_config(route_name=route_prefix+'uncheckedDatas/id_indiv/ptt',renderer='json',request_method = 'GET', permission = NO_PERMISSION_REQUIRED)
+@view_config(route_name=route_prefix+'uncheckedDatas/id_indiv/ptt',renderer='json',request_method = 'GET')
 def details_unchecked_indiv(request):
     session = request.dbsession
 
@@ -181,7 +181,7 @@ def auto_validation(request):
     session = request.dbsession
 
     type_ = request.matchdict['type']
-    print ('\n*************** AUTO VALIDATE *************** \n')
+    # print ('\n*************** AUTO VALIDATE *************** \n')
     param = request.params.mixed()
     freq = param['frequency']
     listToValidate = json.loads(param['toValidate'])
@@ -243,12 +243,10 @@ def auto_validate_stored_procGSM_Argos(ptt, ind_id,user,type_,freq,session):
         SELECT @nb_insert, @exist, @error; """
         ).bindparams(bindparam('ind_id', ind_id),bindparam('user', user),bindparam('freq', freq),bindparam('ptt', ptt))
         nb_insert, exist , error= session.execute(stmt).fetchone()
-    transaction.commit()
 
     return nb_insert, exist , error
 
 def auto_validate_proc_stocRfid(equipID,sensor,freq,user,session):
-    print(freq)
     if equipID is None : 
         stmt = update(DataRfidWithSite).where(and_(DataRfidWithSite.c['FK_Sensor'] == sensor, DataRfidWithSite.c['equipID'] == equipID)).values(checked =1)
         session.execute(stmt)

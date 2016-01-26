@@ -12,8 +12,10 @@ define([
   'models/gpxForm',
   'i18n',
 
+
 ], function($, _, Backbone, Marionette, config, Swal,
  XmlParser, NsForm, GpxForm
+
 ) {
 
   'use strict';
@@ -29,12 +31,10 @@ define([
       'change select[name="fieldActivity"]': 'setFieldActivity',
       'click #resetFieldActivity': 'resetFieldActivity',
       'click button[data-action="add"]': 'setUsers',
-      'change select[name="FieldWorker"]': 'checkUsers'
     },
 
     ui: {
       'fielActivity': '#fielActivity',
-      //'selectFieldActivity' : '#selectFieldActivity',
       'selectFieldActivity': '#c14_fieldActivity',
       'fileInput': 'input#fileInput',
       'form': '#form',
@@ -54,7 +54,8 @@ define([
       this.loadCollection(config.coreUrl + 'fieldActivity', 'select[name="fieldActivity"]');
       $('button[data-action="add"]').attr('disabled','disabled');
       $('.fieldactivity').addClass('hidden');
-      $('.fieldworkers').addClass('hidden');
+      this.fieldworkers = $('label[for*="FieldWorkers"]').parent();
+      $(this.fieldworkers).addClass('hidden');
     },
 
     importFile: function(e) {
@@ -95,7 +96,7 @@ define([
             $(userBtn).removeAttr('disabled');
             $('#importGpxMsg').addClass('hidden');
             $('.fieldactivity').removeClass('hidden');
-            $('.fieldworkers').removeClass('hidden');
+            $(_this.fieldworkers).removeClass('hidden');
 
             if (errosList.length > 0) {
               for (var i = 0; i < errosList.length; i++) {
@@ -112,7 +113,7 @@ define([
             $(fieldAfield).attr('disabled','disabled');
             $(userBtn).attr('disabled','disabled');
             $('.fieldactivity').addClass('hidden');
-            $('.fieldworkers').addClass('hidden');
+            $(_this.fieldworkers).addClass('hidden');
           }
         };
       }
@@ -124,6 +125,7 @@ define([
     },
 
     swalError: function(title) {
+      var _this = this;
       Swal({
         title: title,
         text: 'error',
@@ -136,7 +138,7 @@ define([
       function(isConfirm) {
         $('form')[0].reset();
         $('.fieldactivity').addClass('hidden');
-        $('.fieldworkers').addClass('hidden');
+        $(_this.fieldworkers).addClass('hidden');
       });
     },
 
@@ -160,9 +162,13 @@ define([
 
     check: function() {
       var error = this.nsform.BBForm.commit();
+
+      console.log(error);
       if(error){
         return false;
       }else{
+        var fieldworkers = this.nsform.BBForm.model.get('FieldWorkers');
+        this.setFieldWorkers(fieldworkers);
         return true;
       }
     },
@@ -176,6 +182,7 @@ define([
         formRegion: this.ui.form,
         //displayMode: 'display',
         reloadAfterSave: false,
+        disabled : false,
       });
     },
     loadCollection: function(url, element) {
@@ -195,67 +202,15 @@ define([
         }
       });
     },
-    setUsers: function() {
-      var url = config.coreUrl + 'user';
-      var collection =  new Backbone.Collection();
-      collection.url = url;
-      var elem = '<option></option>';
-      collection.fetch({
-        success: function(data) {
-          var options = [];
-          for (var i in data.models) {
-            var current = data.models[i];
-            var value =  current.get('PK_id');
-            var label =  current.get('fullname');
-            elem += '<option value =' + value + '>' + label + '</option>';
-          }
-          $('select[name="FieldWorker"]').each(function() {
-            if ($(this).text() == '') {
-              $(this).append(elem);
-            }
-          });
-        }
+    setFieldWorkers : function(tab){
+       var list = [];
+       for (var i=0;i<tab.length;i++){
+        list.push(parseInt(tab[i].FieldWorker));
+       }
+       this.wayPointList.each(function(model) {
+        model.set('FieldWorkers', list);
       });
-    },
-    checkUsers: function(e) {
-      var usersFields = $('select[name="FieldWorker"]');
-      var selectedUser = $(e.target).val();
-      var exists = 0;
-      $('select[name="FieldWorker"]').each(function() {
-        var user = $(this).val();
-        if (user == selectedUser) {
-          exists += 1;
-        }
-      });
-      if (exists > 1) {
-        Swal({
-          title: 'Fieldworker name error',
-          text: 'Already selected ! ',
-          type: 'error',
-          showCancelButton: false,
-          confirmButtonColor: 'rgb(147, 14, 14)',
-          confirmButtonText: 'OK',
-          closeOnConfirm: true,
-        },
-        function(isConfirm) {
-          $(e.target).val('');
-        });
-
-      } else {
-        this.updateUsers(e);
-      }
-    },
-    updateUsers: function(e) {
-      var users = [];
-      $('select[name="FieldWorker"]').each(function() {
-        var user = parseInt($(this).val());
-        if (user) {
-          users.push(user);
-        }
-      });
-      this.wayPointList.each(function(model) {
-        model.set('FieldWorkers', users);
-      });
-    },
+       
+    }
   });
 });

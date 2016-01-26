@@ -7,7 +7,7 @@ from datetime import datetime
 from .FrontModules import FrontModules,ModuleForms
 from pyramid import threadlocal
 
-DynPropType = {'string':'Text','float':'Text','date':'Date','integer':'Text','int':'Text'}
+# DynPropType = {'string':'Text','float':'Text','date':'Date','integer':'Text','int':'Text'}
 
 class ObjectTypeWithDynProp:
     ''' Class to extend for mapped object type with dynamic props'''
@@ -42,40 +42,23 @@ class ObjectTypeWithDynProp:
 
     def AddDynamicPropInSchemaDTO(self,SchemaDTO,FrontModules,DisplayMode):
         ''' return schema of dynamic props according to object type and configuration in table : FrontModules > ModuleForms '''
-        curQuery = 'select * from ' + self.GetDynPropContextTable() + ' C  JOIN ' + self.GetDynPropTable() + ' D ON C.' + self.Get_FKToDynPropTable() + '= D.ID '
-        if self.ID :
-            curQuery += ' where C.' + self.GetFK_DynPropContextTable() + ' = ' + str(self.ID )
-
-        Values = self.ObjContext.execute(curQuery).fetchall()
         Editable = (DisplayMode.lower()  == 'edit')
         Fields = self.ObjContext.query(ModuleForms
             ).filter(ModuleForms.Module_ID == FrontModules.ID
-            ).filter(or_(ModuleForms.TypeObj == self.ID, ModuleForms.TypeObj == None)).all()
+            ).filter(or_(ModuleForms.TypeObj == self.ID, ModuleForms.TypeObj == None)
+            ).filter(ModuleForms.FormRender > 0).all()
 
-        for CurModuleForms in Fields : 
-            curEditable = Editable
-            #CurModuleForms = list(filter(lambda x : x.Name == curValue['Name'], Fields))
-            #if (len(CurModuleForms)> 0 ):
-                # Conf définie dans FrontModules
-            #CurModuleForms = CurModuleForms[0]
-
-                # TODO : Gestion champ read ONly
-            curSize = CurModuleForms.FieldSizeDisplay
-            if curEditable:
-                curSize = CurModuleForms.FieldSizeEdit
-            if (CurModuleForms.FormRender & 2) == 0:
-                curEditable = False
-            SchemaDTO[CurModuleForms.Name] = CurModuleForms.GetDTOFromConf(curEditable,ModuleForms.GetClassFromSize(curSize))
-
+        for CurModuleForms in Fields :
+            SchemaDTO[CurModuleForms.Name] = CurModuleForms.GetDTOFromConf(Editable)
 
     def GetDynPropNames(self):
         curQuery = 'select D.Name from ' + self.GetDynPropContextTable() + ' C  JOIN ' + self.GetDynPropTable() + ' D ON C.' + self.Get_FKToDynPropTable() + '= D.ID '
         #curQuery += 'not exists (select * from ' + self.GetDynPropValuesTable() + ' V2 '
         curQuery += ' where C.' + self.GetFK_DynPropContextTable() + ' = ' + str(self.ID )
         Values = self.ObjContext.execute(curQuery).fetchall()
-        resultat = {}
+        resultat = []
         for curValue in Values : 
-           resultat[curValue['Name']] = curValue
+           resultat.append(curValue['Name'].lower())
         return resultat
 
     def GetDynProps(self):
@@ -93,8 +76,9 @@ class ObjectTypeWithDynProp:
             ).filter(ModuleForms.Module_ID == FrontModules.ID
             ).filter(or_(ModuleForms.TypeObj == self.ID, ModuleForms.TypeObj == None)).all()
    
-        Legends = sorted ([(obj.Legend,obj.FormOrder,obj.Name)for obj in Fields if obj.FormOrder is not None ], key = lambda x : x[1])
+        Legends = sorted ([(obj.Legend,obj.FormOrder,obj.Name)for obj in Fields if obj.FormOrder is not None], key = lambda x : x[1])
         # Legend2s = sorted ([(obj.Legend)for obj in Fields if obj.FormOrder is not None ], key = lambda x : x[1])
+
         Unique_Legends = list()
         # Get distinct Fieldset in correct order
         for x in Legends:
@@ -108,6 +92,13 @@ class ObjectTypeWithDynProp:
         for curProp in Legends:
             curIndex = Unique_Legends.index(curProp[0])
             resultat[curIndex]['fields'].append(curProp[2])
+
+        # list_of_subschema = list(filter(lambda x : 'subschema' in Schema[x] ,Schema))
+        # if len(list_of_subschema) >0 :
+        #     for subName in list_of_subschema :
+        #         print(subName)
+        #         Schema[subName]['fieldsets'] = self.GetFieldSets(FrontModules,Schema[subName]['subschema'])
+
         return resultat
 
 

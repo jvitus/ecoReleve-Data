@@ -24,16 +24,12 @@ from .RFIDimport import uploadFileRFID
 route_prefix = 'sensors/'
 
 # ------------------------------------------------------------------------------------------------------------------------- #
-@view_config(route_name=route_prefix+'datas', renderer='json' ,request_method='POST',permission = NO_PERMISSION_REQUIRED)
+@view_config(route_name=route_prefix+'datas', renderer='json' ,request_method='POST')
 def uploadFile(request):
-    print('    type import    ')
     type_= request.matchdict['type']
     dictFuncImport={
     'argos': uploadFileArgos,
     'gsm':uploadFilesGSM,
     'rfid':uploadFileRFID
     }
-    print(type_)
-    print(dictFuncImport[type_])
-
     return dictFuncImport[type_](request) 

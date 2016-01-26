@@ -6,7 +6,11 @@ from sqlalchemy import (and_,
  join,
  cast,
  not_,
- DATE)
+ or_,
+ DATE,
+ case,
+ literal_column,
+ outerjoin)
 from sqlalchemy.orm import aliased
 from ..GenericObjets.ListObjectWithDynProp import ListObjectWithDynProp
 from ..Models import (
@@ -19,12 +23,16 @@ from ..Models import (
     Base,
     Equipment,
     Sensor,
-    SensorDynPropValue
+    SensorDynPropValue,
+    Individual_Location
     )
 from ..utils import Eval
 import pandas as pd 
 from collections import OrderedDict
 from datetime import datetime
+from ..utils.datetime import parse
+from ..utils.generator import Generator
+
 
 eval_ = Eval()
 
@@ -39,6 +47,13 @@ class StationList(ListObjectWithDynProp):
         query = super().WhereInJoinTable(query,criteriaObj)
         curProp = criteriaObj['Column']
         if curProp == 'FK_ProtocoleType':
+            subSelect = select([Observation]
+                ).where(
+                and_(Station.ID== Observation.FK_Station
+                    ,eval_.eval_binary_expr(Observation.__table__.c[curProp],criteriaObj['Operator'],criteriaObj['Value'])))
+            query = query.where(exists(subSelect))
+
+        if curProp == 'FK_Individual':
             subSelect = select([Observation]
                 ).where(
                 and_(Station.ID== Observation.FK_Station
@@ -80,7 +95,7 @@ class StationList(ListObjectWithDynProp):
             for row in result :
                 row = OrderedDict(row)
                 try :
-                    row['FieldWorkers'] = list_[row['ID']]
+                    row['FK_FieldWorker_FieldWorkers'] = list_[row['ID']]
                 except:
                     pass
                 data.append(row)
@@ -93,7 +108,7 @@ class StationList(ListObjectWithDynProp):
     def countQuery(self,criteria = None):
         query = super().countQuery(criteria)
         for obj in criteria :
-            if obj['Column'] in ['FK_ProtocoleType','FK_FieldWorker','LastImported']:
+            if obj['Column'] in ['FK_ProtocoleType','FK_FieldWorker','LastImported','FK_Individual']:
                 query = self.WhereInJoinTable(query,obj)
         return query
 
@@ -104,41 +119,78 @@ class IndividualList(ListObjectWithDynProp):
     def __init__(self,frontModule) :
         super().__init__(Individual,frontModule)
 
+    def GetJoinTable (self,searchInfo) :
+        StatusTable = Base.metadata.tables['IndividualStatus']
+        joinTable = super().GetJoinTable(searchInfo)
+        
+        joinTable = outerjoin(joinTable,StatusTable,StatusTable.c['FK_Individual'] == Individual.ID)
+
+        # selectCase = case ([
+        #     (StatusTable.c['Status'] == None, literal_column("'inconnu'"))
+        #     ],
+        #     else_=StatusTable.c['Status'])
+        self.selectable.append(StatusTable.c['Status_'].label('Status_'))
+        return joinTable
+
     def WhereInJoinTable (self,query,criteriaObj) :
         query = super().WhereInJoinTable(query,criteriaObj)
         curProp = criteriaObj['Column']
         if curProp == 'LastImported':
             st = aliased(Individual)
             subSelect = select([Observation]).where(Observation.FK_Individual == Individual.ID)
-            subSelect2 = select([cast(func.max(st.creationDate),DATE)]).where(st.Original_ID.like('TRACK_%'))
-            query = query.where(and_(~exists(subSelect)
-                ,and_(~exists(subSelect)
-                    ,and_(Individual.Original_ID.like('TRACK_%'),Individual.creationDate >= subSelect2)
-                    )
-                ))
+            # subSelect2 = select([cast(func.max(st.creationDate),DATE)]).where(st.Original_ID.like('TRACK_%'))
+            # query = query.where(and_(~exists(subSelect)
+            #     # ,and_(~exists(subSelect)
+            #         # ,and_(Individual.Original_ID.like('TRACK_%'),Individual.creationDate >= subSelect2)
+            #         # )
+            #     )
+            query = query.where(and_(~exists(subSelect),Individual.Original_ID.like('TRACK_%')))
+
+        if curProp == 'FK_Sensor':
+            table = Base.metadata.tables['IndividualEquipment']
+            subSelect = select([table.c['FK_Individual']]
+                ).where(
+                and_(Individual.ID== table.c['FK_Individual']
+                    ,and_(eval_.eval_binary_expr(table.c[curProp],criteriaObj['Operator'],criteriaObj['Value'])
+                        ,or_(table.c['EndDate'] >= func.now(),table.c['EndDate'] == None))
+                        ))
+            query = query.where(exists(subSelect))
+
+        if curProp == 'Status_':
+            StatusTable = Base.metadata.tables['IndividualStatus']
+            query = query.where(eval_.eval_binary_expr(StatusTable.c['Status_'],criteriaObj['Operator'],criteriaObj['Value']))
+
         return query
 
     def countQuery(self,criteria = None):
         query = super().countQuery(criteria)
-        if len(list(filter(lambda x:'frequency'==x['Column'], criteria)))>0:
-            print('IN COUNT FREQUENCY')
-            query = self.whereInEquipementVHF(query,criteria)
+        # if len(list(filter(lambda x:'frequency'==x['Column'], criteria)))>0:
+        #     query = self.whereInEquipementVHF(query,criteria)
         for obj in criteria :
             if obj['Column'] in ['LastImported']:
                 query = self.WhereInJoinTable(query,obj)
+
+            if obj['Column'] == 'Status_':
+                StatusTable = Base.metadata.tables['IndividualStatus']
+                existsQueryStatus = select([StatusTable.c['FK_Individual']]
+                    ).where(and_(Individual.ID == StatusTable.c['FK_Individual']
+                    ,eval_.eval_binary_expr(StatusTable.c['Status_'],obj['Operator'],obj['Value'])))
+                query = query.where(exists(existsQueryStatus))
+
+            if obj['Column'] == 'frequency':
+                query = self.whereInEquipementVHF(query,criteria)
+
         return query
 
     def GetFullQuery(self,searchInfo=None) :
         ''' return the full query to execute '''
-        print('IN INDIV LIST ')
         if searchInfo is None or 'criteria' not in searchInfo:
             searchInfo['criteria'] = []
-            print('********** NO Criteria ***************')
+
         joinTable = self.GetJoinTable(searchInfo)
         fullQueryJoin = select(self.selectable).select_from(joinTable)
 
         if len(list(filter(lambda x:'frequency'==x['Column'], searchInfo['criteria'])))>0:
-            print('FREQUENCY ')
             fullQueryJoin = self.whereInEquipementVHF(fullQueryJoin,searchInfo['criteria'])
 
         for obj in searchInfo['criteria'] :
@@ -148,7 +200,6 @@ class IndividualList(ListObjectWithDynProp):
         return fullQueryJoinOrdered
 
     def whereInEquipementVHF(self,fullQueryJoin,criteria):
-        print('in whereInEquipementVHF')
         freq = list(filter(lambda x:'frequency'==x['Column'], criteria))[0]['Value']
         e2 = aliased(Equipment)
         vs = Base.metadata.tables['SensorDynPropValuesNow']
@@ -169,6 +220,17 @@ class IndividualList(ListObjectWithDynProp):
 
         return fullQueryJoin
 
+#--------------------------------------------------------------------------
+class IndivLocationList(Generator):
+
+    def __init__(self,table,SessionMaker,id_=None):
+        joinTable= join(Individual_Location, Sensor
+            , Individual_Location.FK_Sensor == Sensor.ID)
+
+        # Use select statment as ORM Table 
+        IndivLoc = select([Individual_Location,Sensor.UnicIdentifier]
+            ).select_from(joinTable).where(Individual_Location.FK_Individual == id_).cte()
+        super().__init__(IndivLoc,SessionMaker)
 
 #--------------------------------------------------------------------------
 class SensorList(ListObjectWithDynProp):
@@ -180,17 +242,11 @@ class SensorList(ListObjectWithDynProp):
         query = super().WhereInJoinTable(query,criteriaObj)
         curProp = criteriaObj['Column']
         if 'available' in curProp.lower():
-            print('IN SENSOR AVAILABLE ********************************')
-            print(curProp)
-            print(criteriaObj['Value'])
+            date = criteriaObj['Value']
             try:
-                try : 
-                    date = datetime.strptime(criteriaObj['Value'],'%d/%m/%Y% H:%M:%S')
-                except:
-                    date = datetime.strptime(criteriaObj['Value'].replace(' ',''),'%d/%m/%Y%H:%M:%S')
+                date = parse(date.replace(' ',''))
             except:
                 pass
-            # criteriaObj['Value'] = datetime.strptime(criteriaObj['Value'],'%d/%m/%Y')
             s2 = aliased(Sensor)
             e = aliased(Equipment)
             e2 = aliased(Equipment)
@@ -218,7 +274,6 @@ class SensorList(ListObjectWithDynProp):
                 query = self.WhereInJoinTable(query,obj)
         return query
 
-    def GetFullQuery(self,searchInfo=None) :
-        query = super().GetFullQuery(searchInfo)
-        print(query)
-        return query
+    # def GetFullQuery(self,searchInfo=None) :
+    #     query = super().GetFullQuery(searchInfo)
+    #     return query

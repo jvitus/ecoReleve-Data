@@ -4,6 +4,7 @@ from sqlalchemy.dialects.mssql.base import BIT
 from sqlalchemy.orm import relationship
 import json
 from pyramid import threadlocal
+from traceback import print_exc
 
 FieldSizeToClass = {0:'col-md-3',1:'col-md-6',2:'col-md-12'}
 
@@ -69,39 +70,62 @@ class ModuleForms(Base):
     def GetClassFromSize(FieldSize):
         return FieldSizeToClass[FieldSize]
 
-    def GetDTOFromConf(self,IsEditable,CssClass):
+    def GetDTOFromConf(self,Editable):
         ''' return input field to build form '''
+
+        self.Editable = Editable
+        curEditable = self.Editable
+        curInputType = self.InputType
+
+        if self.Editable:
+            if self.FormRender < 2:
+                curEditable = False
+                isDisabled = True
+            else :
+                isDisabled = False
+            self.fullPath = False
+            curSize = self.FieldSizeEdit
+        else :
+            curSize = self.FieldSizeDisplay
+            self.fullPath = True
+            isDisabled = True
+
+            if self.InputType in ['AutocompTreeEditor']:
+                curInputType = 'Text'
+                self.fullPath = True
+
+        CssClass = FieldSizeToClass[curSize]
+
         self.dto = {
             'name': self.Name,
-            'type': self.InputType,
+            'type': curInputType,
             'title' : self.Label,
-            'editable' : IsEditable,
+            'editable' : Editable,
             'editorClass' : str(self.editorClass) ,
             'validators': [],
             'options': [],
-            'defaultValue' : None
+            'defaultValue' : None,
+            'editorAttrs' : {'disabled': isDisabled},
+            'fullPath':self.fullPath
             }
-        self.CssClass = CssClass
-        self.IsEditable = IsEditable
-        validators = self.Validators
-        if validators is not None:
-            self.dto['validators'] = json.loads(validators)
+
+        if self.Validators is not None:
+            self.dto['validators'] = json.loads(self.Validators)
 
         if self.Required == 1 :
             if self.InputType=="Select":
                 self.dto['validators'].append("required")
             else:
                 self.dto['validators'].append("required")
-            self.dto['title'] = self.dto['title'] + '*'
+            self.dto['title'] = self.dto['title'] + ' *'
 
             # TODO changer le validateur pour select required (valeur <>-1)
-        if self.IsEditable :
+        if self.Editable :
             self.dto['fieldClass'] = str(self.EditClass) + ' ' + CssClass
         else :
             self.dto['fieldClass'] = str(self.displayClass) + ' ' + CssClass
 
             # TODO changer le validateur pour select required (valeur <>-1)
-
         if self.InputType in self.func_type_context :
             self.func_type_context[self.InputType](self)
         # default value
@@ -128,18 +152,31 @@ class ModuleForms(Base):
             subNameObj = result[0].Name
             subschema = {}
             for conf in result :
-                subschema[conf.Name] = conf.GetDTOFromConf(self.IsEditable,self.CssClass)
-            self.dto = {
-            'Name': self.Name,
-            'type': self.InputType,
-            'title' : None,
-            'editable' : None,
-            'editorClass' : str(self.editorClass),
-            'validators': [],
-            'options': [],
-            'fieldClass': None,
-            'subschema' : subschema
-            }
+                subschema[conf.Name] = conf.GetDTOFromConf(self.Editable)
+
+            fields = []
+            resultat = []
+            Legends = sorted ([(obj.Legend,obj.FormOrder,obj.Name)for obj in result if obj.FormOrder is not None], key = lambda x : x[1])
+            # Legend2s = sorted ([(obj.Legend)for obj in result if obj.FormOrder is not None ], key = lambda x : x[1])
+            withOutLegends = sorted ([(obj.Legend,obj.FormOrder,obj.Name)for obj in result if obj.FormOrder is not None and obj.Legend is None ], key = lambda x : x[1])
+
+            Unique_Legends = list()
+            # Get distinct Fieldset in correct order
+            for x in Legends:
+                if x[0] not in Unique_Legends:
+                    Unique_Legends.append(x[0])
+            
+            for curLegend in Unique_Legends:
+                curFieldSet = {'fields' :[],'legend' : curLegend}
+                resultat.append(curFieldSet)
+
+            for curProp in Legends:
+                curIndex = Unique_Legends.index(curProp[0])
+                resultat[curIndex]['fields'].append(curProp[2])
+
+            self.dto['fieldsets'] = resultat
+            self.dto['subschema'] = subschema
+
             try :
                 subTypeObj = int(self.Options)
                 self.dto['defaultValue'] = {'FK_ProtocoleType':subTypeObj}
@@ -147,7 +184,6 @@ class ModuleForms(Base):
                 pass
 
     def InputThesaurus(self) :
-
         if self.Options is not None and self.Options != '' :
             self.dto['options'] = {'startId': self.Options
             , 'wsUrl':dbConfig['wsThesaurus']['wsUrl']
@@ -164,7 +200,6 @@ class ModuleForms(Base):
                     self.dto['options']['source'].append(row[0])
         else : 
             self.dto['options'] = {'source': option['source'],'minLength' :option['minLength']}
-
 
     func_type_context = {
         'Select': InputSelect,
@@ -208,10 +243,10 @@ class ModuleGrids (Base) :
         self.__init__()
 
     def FKName (self):
-        if self.QueryName is None : 
-            return self.Name 
+        if self.QueryName not in [None,'Forced'] : 
+            return self.Name+'_'+self.QueryName
         else : 
-            return self.QueryName
+            return self.Name 
 
     def GenerateColumn (self):
         ''' return grid field to build Grid '''
@@ -230,6 +265,7 @@ class ModuleGrids (Base) :
 
     def GenerateFilter (self) :
         ''' return filter field to build Filter '''
+
         filter_ = {
             'name' : self.Name,
             'type' : self.FilterType,
