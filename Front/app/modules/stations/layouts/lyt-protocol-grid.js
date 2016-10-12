@@ -111,6 +111,7 @@ define([
 
         this.stationId = options.stationId;
         this.forms = [];
+        console.log("bim bam bomm");
 
         this.bindModelEvts();
       },
