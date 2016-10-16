@@ -163,12 +163,6 @@ define([
 
       if (options.model) {
         this.model = options.model;
-        this.copyModel = new Array();
-        //this.copyModel = _.clone(this.model); //copy model if he is given
-        for (var tmp in this.model.attributes ) {
-          this.copyModel[tmp]= this.model.get(tmp);
-        }
-        console.log(this.copyModel);
         this.BBForm = new BackboneForm({
           model: this.model,
           data: this.model.data,
@@ -180,7 +174,6 @@ define([
       else {
         this.initModel();
       }
-      console.log("apres init showform");
 
       if (options.redirectAfterPost){
         // allow to redirect after creation (post) using the id of created object
@@ -245,11 +238,6 @@ define([
           var settings = $.extend({}, _this.data, resp.data); //?
           _this.model.attributes = settings;
 
-          _this.copyModel = _.clone(_this.model); //copy model if he was fetched
-        /*  for (var tmp in _this.model.attributes ) {
-            _this.copyModel[tmp]= _this.model.get(tmp);
-          }*/
-          console.log(_this.copyModel);
           _this.BBForm = new BackboneForm({ model: _this.model, data: _this.model.data, fieldsets: _this.model.fieldsets, schema: _this.model.schema });
           _this.showForm();
           _this.updateState(this.displayMode);
@@ -311,25 +299,6 @@ define([
         });
       }
       $(this.formRegion).find('input').on("change", function(e) {
-      /*  if( e.target.type !== 'checkbox') {
-          //if not a checkbox we check the val()
-          switch ($(e.target).val() )  {
-            case "" : {
-              _this.nbInputNotEmpty -=1
-              break;
-            }
-            case null: {
-              _this.nbInputNotEmpty -=1
-              break;
-            }
-            default : {
-              _this.nbInputNotEmpty +=1
-            break;
-            }
-          }
-          console.log(_this.nbInputNotEmpty);
-          console.log( $(e.target).val() );
-        }*/
          window.formChange = true;
       });
       $(this.formRegion).find('select').on("change", function(e) {
@@ -532,7 +501,6 @@ define([
       }
     }
     else {
-      console.log("le form est vide ");
       this.swal({
         title : 'Empty input',
         text : 'all input are empty',
@@ -610,103 +578,70 @@ define([
       this.displaybuttons();
     },
 
-    onSavingModel: function () {
-      // To be extended, calld after commit before save on model
-      console.log(this);
-      var flagEmpty = true;
+    /*function arguments schema and attribute object and a boolean(true)    */
+    /* for each attributes check if he is in schema                         */
+    /* and if he is not null , diff of defaultValue and visible ( not hide )*/
+    /* stop and return false if one attributes is not empty                 */
 
-      for (var props in this.model.schema) {
-        if (this.model.schema[props].type !== 'Checkbox') {
-          console.log(props);
-          if( typeof this.copyModel[props] !== 'undefined') { //si la props était presente au fetch
-            if( this.copyModel[props] !== this.model.get(props) ) { //et qu'elle a changé
-              flagEmpty = false; //alors on peut sauvegarder
-              console.log("on peut save pour"+props+"   "+this.copyModel[props]);
-              console.log(this.model.get(props));
-              break;
+    recurciveValidation: function ( objSchema , objAttributes , testBool) {
+
+      var testTmp = true;
+      for ( var key in objAttributes ) {
+        switch ( typeof objAttributes[key] ) {
+          case "number" : {
+            if( typeof objSchema[key] != "undefined" && (typeof objSchema[key].fieldClass != "undefined" && objSchema[key].fieldClass.indexOf('hide') == -1 ) &&  ( objAttributes[key]!= null || objAttributes[key]!= 0 ) && objAttributes[key] != objSchema[key].defaultValue) {
+              console.warn("we can save [NUMBER]"+key+" "+objAttributes[key]);
+              if( testBool )
+                testBool = false;
+                return testBool;
             }
+            break;
           }
-          else { // si la props nétait pas présente au fetch
-            switch ( this.model.attributes[props] )  {
-              case "" : {
-                break;
+          case "string" : {
+            if( typeof objSchema[key] != "undefined" && (typeof objSchema[key].fieldClass != "undefined" &&  objSchema[key].fieldClass.indexOf('hide') == -1 ) && objAttributes[key]!= "" && objAttributes[key] != objSchema[key].defaultValue) {
+              console.warn("we can save [STRNG] "+key+" "+objAttributes[key]);
+              if( testBool )
+                testBool = false;
+                return testBool;
+            }
+            break;
+          }
+          case "boolean" : { // skip boolean type
+            break;
+          }
+          case "object" : {
+            if( typeof objSchema[key] != "undefined") {//key in schema
+              if( Array.isArray(objAttributes[key]) ) { // array subform
+                for ( var elem of objAttributes[key] ) { // for each subform
+                  testTmp = this.recurciveValidation (objSchema[key].subschema, elem , true) // call with subform schema and attributes
+                  if(!testTmp)
+                  return testTmp;
+                }
               }
-              case null: {
-                break;
-              }
-              case []:{
-                console.log("tableau vide");
-                break;
-              }
-              default : {
-                console.log("on peut save grace a "+props+"   "+this.model.attributes[props]);
-                console.log(this.model.attributes[props]);
-                flagEmpty = false;
-                break;
+              else { //case thesaurus
+                if( objAttributes[key] != null ) {
+                  if( testBool )
+                    testBool = false;
+                    return testBool;
+                }
               }
             }
+            break;
+          }
+          default : {
+            console.warn("Error! case undefined or another type not possible");
+            break;
           }
         }
       }
-
-    /*  for ( var attrInit in this.model.attributes) {
-        if ( typeof this.copyModel[attrInit] !== 'undefined' ) {
-          if(this.copyModel[attrInit] !== this.model.get(attrInit) ) {
-            flagEmpty = false;
-            break;
-          }
-        }
-        else { // notempty
-          if ( typeof this.model.schema[attrInit] !== 'undefined'  ) {
-            if( this.model.schema[attrInit].type !== 'Checkbox') {
-              switch ( this.model.attributes[attrInit] )  {
-                case "" : {
-                  break;
-                }
-                case null: {
-                  break;
-                }
-                default : {
-                  flagEmpty = false;
-                  break;
-                }
-              }
-            }
-          }
-        }
-      }*/
-
-  /*  for ( var attrInit in this.copyModel.attributes) {
-      console.log(" q: "+this.copyModel.attributes[attrInit]+" ? "+this.model.get(attrInit));
-        if(this.copyModel.attributes[attrInit] !== this.model.get(attrInit) ) {
-          console.log("%% "+this.copyModel.attributes[attrInit]+" %% != $$ "+this.model.get(attrInit)+" $$" );
-          flagEmpty = false;
-          break;
-        }
-      }*/
-
-  /*    for( var field of this.BBForm.selectedFields ) {
-        if ( flagEmpty ) {
-          switch ( this.model.get(field) ) {
-            case false : {
-              break;
-            }
-            case "" : {
-              break;
-            }
-            case null: {
-              break;
-            }
-            default : {
-            flagEmpty = false;
-            break;
-            }
-          }
-        }
-      }*/
-      return flagEmpty;
-
+      return testBool;
     },
+
+    onSavingModel: function () {
+      // To be extended, calld after commit before save on model
+      return this.recurciveValidation(this.model.schema,this.model.attributes , true );
+    },
+
     afterSavingModel: function () {
       // To be extended called after model.save()
     },
