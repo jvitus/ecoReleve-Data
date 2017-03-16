@@ -1,15 +1,15 @@
 from sqlalchemy import select, and_
 import pandas as pd
 import numpy as np
-import win32con
-import win32gui
 import os
 import re
-from win32 import win32api
 import shutil
-from time import sleep
-import subprocess
-import psutil
+# import win32con
+# import win32gui
+# from win32 import win32api
+# from time import sleep
+# import subprocess
+# import psutil
 from datetime import datetime
 from ..Models import ArgosGps, ArgosEngineering, dbConfig
 import itertools
@@ -46,165 +46,165 @@ def uploadFileArgos(request):
 
     if 'DIAG' in filename:
         return parseDIAGFileAndInsert(full_filename, session)
-    elif 'DS' in filename:
-        return parseDSFileAndInsert(full_filename, session)
+    # elif 'DS' in filename:
+    #     return parseDSFileAndInsert(full_filename, session)
 
 
-def parseDSFileAndInsert(full_filename, session):
-    workDir = os.path.dirname(os.path.dirname(
-        os.path.dirname(os.path.abspath(__file__))))
-    con_file = os.path.join(workDir, 'init.txt')
-    MTI_path = os.path.join(workDir, 'MTIwinGPS.exe')
-    out_path = os.path.join(workDir,
-                            "ecoReleve_import",
-                            "Argos",
-                            os.path.splitext(
-                                os.path.basename(full_filename))[0])
+# def parseDSFileAndInsert(full_filename, session):
+#     workDir = os.path.dirname(os.path.dirname(
+#         os.path.dirname(os.path.abspath(__file__))))
+#     con_file = os.path.join(workDir, 'init.txt')
+#     MTI_path = os.path.join(workDir, 'MTIwinGPS.exe')
+#     out_path = os.path.join(workDir,
+#                             "ecoReleve_import",
+#                             "Argos",
+#                             os.path.splitext(
+#                                 os.path.basename(full_filename))[0])
 
-    EngData = None
-    GPSData = None
-    EngDataBis = None
-    nb_gps_data = None
-    nb_existingGPS = None
-    nb_eng = 0
-    nb_existingEng = 0
+#     EngData = None
+#     GPSData = None
+#     EngDataBis = None
+#     nb_gps_data = None
+#     nb_existingGPS = None
+#     nb_eng = 0
+#     nb_existingEng = 0
 
-    if not os.path.exists(out_path):
-        os.makedirs(out_path)
-    try:
-        os.remove(con_file)
-    except:
-        pass
+#     if not os.path.exists(out_path):
+#         os.makedirs(out_path)
+#     try:
+#         os.remove(con_file)
+#     except:
+#         pass
 
-    # Config init.txt for MTI-PArser
-    cc = {'full_filename': full_filename}
-    cc['out'] = out_path
-    cc['ini'] = con_file
+#     # Config init.txt for MTI-PArser
+#     cc = {'full_filename': full_filename}
+#     cc['out'] = out_path
+#     cc['ini'] = con_file
 
-    with open(con_file, 'w') as f:
-        print('-eng\n-title\n-out\n' + out_path + '\n' + full_filename, file=f)
+#     with open(con_file, 'w') as f:
+#         print('-eng\n-title\n-out\n' + out_path + '\n' + full_filename, file=f)
 
-    # execute MTI-Parser
-    args = [MTI_path]
-    proc = subprocess.Popen([args[0]])
-    hwnd = 0
-    while hwnd == 0:
-        sleep(0.3)
-        hwnd = win32gui.FindWindow(0, "MTI Argos-GPS Parser")
+#     # execute MTI-Parser
+#     args = [MTI_path]
+#     proc = subprocess.Popen([args[0]])
+#     hwnd = 0
+#     while hwnd == 0:
+#         sleep(0.3)
+#         hwnd = win32gui.FindWindow(0, "MTI Argos-GPS Parser")
 
-    btnHnd = win32gui.FindWindowEx(hwnd, 0, "Button", "Run")
-    win32api.SendMessage(btnHnd, win32con.BM_CLICK, 0, 0)
-    filenames = [os.path.join(out_path, fn)
-                 for fn in next(os.walk(out_path))[2]]
-    win32api.SendMessage(hwnd, win32con.WM_CLOSE, 0, 0)
+#     btnHnd = win32gui.FindWindowEx(hwnd, 0, "Button", "Run")
+#     win32api.SendMessage(btnHnd, win32con.BM_CLICK, 0, 0)
+#     filenames = [os.path.join(out_path, fn)
+#                  for fn in next(os.walk(out_path))[2]]
+#     win32api.SendMessage(hwnd, win32con.WM_CLOSE, 0, 0)
 
-    # kill process Mti-Parser
-    pid = proc.pid
-    cc['pid'] = pid
-    parent = psutil.Process(pid)
-    try:
-        # or parent.children() for recursive=False
-        for child in parent.children(recursive=True):
-            child.kill()
-        parent.kill()
-    except:
-        pass
+#     # kill process Mti-Parser
+#     pid = proc.pid
+#     cc['pid'] = pid
+#     parent = psutil.Process(pid)
+#     try:
+#         # or parent.children() for recursive=False
+#         for child in parent.children(recursive=True):
+#             child.kill()
+#         parent.kill()
+#     except:
+#         pass
 
-    # process output files
-    for filename in filenames:
-        fullname = os.path.splitext(os.path.basename(filename))[0]
-        ptt = int(fullname[0:len(fullname) - 1])
+#     # process output files
+#     for filename in filenames:
+#         fullname = os.path.splitext(os.path.basename(filename))[0]
+#         ptt = int(fullname[0:len(fullname) - 1])
 
-        if filename.endswith("g.txt"):
-            tempG = pd.read_csv(filename, sep='\t', header=0, parse_dates=[
-                                0], infer_datetime_format=True)
-            tempG['ptt'] = ptt
-            try:
-                GPSData = GPSData.append(tempG)
-            except:
-                GPSData = tempG
+#         if filename.endswith("g.txt"):
+#             tempG = pd.read_csv(filename, sep='\t', header=0, parse_dates=[
+#                                 0], infer_datetime_format=True)
+#             tempG['ptt'] = ptt
+#             try:
+#                 GPSData = GPSData.append(tempG)
+#             except:
+#                 GPSData = tempG
 
-        if filename.endswith("e.txt"):
-            usecols = ['txDate', 'pttDate', 'satId', 'activity', 'txCount',
-                       'temp', 'batt', 'fixTime', 'satCount', 'resetHours',
-                       'fixDays', 'season', 'shunt', 'mortalityGT', 'seasonalGT'
-                       ]
-            usecolsBis = ['txDate', 'resetHours', 'cycle', 'season']
-            tempEng = pd.read_csv(filename, sep='\t', parse_dates=[
-                                  0], header=None, skiprows=[0])
+#         if filename.endswith("e.txt"):
+#             usecols = ['txDate', 'pttDate', 'satId', 'activity', 'txCount',
+#                        'temp', 'batt', 'fixTime', 'satCount', 'resetHours',
+#                        'fixDays', 'season', 'shunt', 'mortalityGT', 'seasonalGT'
+#                        ]
+#             usecolsBis = ['txDate', 'resetHours', 'cycle', 'season']
+#             tempEng = pd.read_csv(filename, sep='\t', parse_dates=[
+#                                   0], header=None, skiprows=[0])
 
-            trueCols = usecols
-            if len(tempEng.columns) == 17:
-                trueCols.append('latestLat')
-                trueCols.append('latestLon')
+#             trueCols = usecols
+#             if len(tempEng.columns) == 17:
+#                 trueCols.append('latestLat')
+#                 trueCols.append('latestLon')
 
-            if len(tempEng.columns) < 5:
-                trueCols = usecolsBis
+#             if len(tempEng.columns) < 5:
+#                 trueCols = usecolsBis
 
-            tempEng.columns = trueCols
-            tempEng.loc[:, ('ptt')] = ptt
-            try:
-                EngData = EngData.append(tempEng)
-            except:
-                EngData = tempEng
+#             tempEng.columns = trueCols
+#             tempEng.loc[:, ('ptt')] = ptt
+#             try:
+#                 EngData = EngData.append(tempEng)
+#             except:
+#                 EngData = tempEng
 
-        if filename.endswith("d.txt"):
-            usecols = ['txDate', 'temp', 'batt', 'txCount', 'activity']
-            tempEng = pd.read_csv(filename, sep='\t', parse_dates=[
-                                  0], header=None, skiprows=[0])
-            tempEng.columns = usecols
-            tempEng['ptt'] = ptt
-            tempEng['pttDate'] = tempEng['txDate']
-            try:
-                EngDataBis = EngDataBis.append(tempEng)
-            except:
-                EngDataBis = tempEng
+#         if filename.endswith("d.txt"):
+#             usecols = ['txDate', 'temp', 'batt', 'txCount', 'activity']
+#             tempEng = pd.read_csv(filename, sep='\t', parse_dates=[
+#                                   0], header=None, skiprows=[0])
+#             tempEng.columns = usecols
+#             tempEng['ptt'] = ptt
+#             tempEng['pttDate'] = tempEng['txDate']
+#             try:
+#                 EngDataBis = EngDataBis.append(tempEng)
+#             except:
+#                 EngDataBis = tempEng
 
-    if EngData is not None:
-        EngToInsert = checkExistingEng(EngData, session)
-        nb_existingEng += EngData.shape[0]
-        if EngToInsert.shape[0] != 0:
-            # Insert non existing data into DB
-            nb_eng += EngToInsert.shape[0]
-            EngToInsert.to_sql(ArgosEngineering.__table__.name,
-                               session.get_bind(),
-                               if_exists='append',
-                               schema=dbConfig['sensor_schema'],
-                               index=False)
+#     if EngData is not None:
+#         EngToInsert = checkExistingEng(EngData, session)
+#         nb_existingEng += EngData.shape[0]
+#         if EngToInsert.shape[0] != 0:
+#             # Insert non existing data into DB
+#             nb_eng += EngToInsert.shape[0]
+#             EngToInsert.to_sql(ArgosEngineering.__table__.name,
+#                                session.get_bind(),
+#                                if_exists='append',
+#                                schema=dbConfig['sensor_schema'],
+#                                index=False)
 
-    if EngDataBis is not None:
-        EngBisToInsert = checkExistingEng(EngDataBis, session)
-        nb_existingEng += EngDataBis.shape[0]
-        if EngBisToInsert.shape[0] != 0:
-            nb_eng += EngBisToInsert.shape[0]
-            # Insert non existing data into DB
-            EngBisToInsert.to_sql(ArgosEngineering.__table__.name,
-                                  session.get_bind(),
-                                  if_exists='append',
-                                  schema=dbConfig['sensor_schema'],
-                                  index=False)
+#     if EngDataBis is not None:
+#         EngBisToInsert = checkExistingEng(EngDataBis, session)
+#         nb_existingEng += EngDataBis.shape[0]
+#         if EngBisToInsert.shape[0] != 0:
+#             nb_eng += EngBisToInsert.shape[0]
+#             # Insert non existing data into DB
+#             EngBisToInsert.to_sql(ArgosEngineering.__table__.name,
+#                                   session.get_bind(),
+#                                   if_exists='append',
+#                                   schema=dbConfig['sensor_schema'],
+#                                   index=False)
 
-    if GPSData is not None:
-        GPSData = GPSData.replace(["neg alt"], [-999])
-        DFToInsert = checkExistingGPS(GPSData, session)
-        nb_gps_data = DFToInsert.shape[0]
-        nb_existingGPS = GPSData.shape[0] - DFToInsert.shape[0]
-        if DFToInsert.shape[0] != 0:
-            # Insert non existing data into DB
-            DFToInsert.to_sql(ArgosGps.__table__.name,
-                              session.get_bind(),
-                              if_exists='append',
-                              schema=dbConfig['sensor_schema'],
-                              index=False)
+#     if GPSData is not None:
+#         GPSData = GPSData.replace(["neg alt"], [-999])
+#         DFToInsert = checkExistingGPS(GPSData, session)
+#         nb_gps_data = DFToInsert.shape[0]
+#         nb_existingGPS = GPSData.shape[0] - DFToInsert.shape[0]
+#         if DFToInsert.shape[0] != 0:
+#             # Insert non existing data into DB
+#             DFToInsert.to_sql(ArgosGps.__table__.name,
+#                               session.get_bind(),
+#                               if_exists='append',
+#                               schema=dbConfig['sensor_schema'],
+#                               index=False)
 
-    os.remove(full_filename)
-    shutil.rmtree(out_path)
-    return {'inserted gps': nb_gps_data,
-            'existing gps': nb_existingGPS,
-            'inserted Engineering': nb_eng,
-            'existing Engineering': nb_existingEng - nb_eng,
-            'inserted argos': 0,
-            'existing argos': 0}
+#     os.remove(full_filename)
+#     shutil.rmtree(out_path)
+#     return {'inserted gps': nb_gps_data,
+#             'existing gps': nb_existingGPS,
+#             'inserted Engineering': nb_eng,
+#             'existing Engineering': nb_existingEng - nb_eng,
+#             'inserted argos': 0,
+#             'existing argos': 0}
 
 
 def checkExistingEng(EngData, session):

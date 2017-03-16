@@ -66,15 +66,17 @@ def includeme(config):
 def main(global_config, **settings):
     """ This function initialze DB conection and returns a Pyramid WSGI application. """
 
-    settings['sqlalchemy.Export.url'] = settings['cn.dialect'] + \
-        quote_plus(settings['sqlalchemy.Export.url'])
-    engineExport = engine_from_config(
-        settings, 'sqlalchemy.Export.', legacy_schema_aliasing=True)
-
-    settings['sqlalchemy.default.url'] = settings['cn.dialect'] + \
-        quote_plus(settings['sqlalchemy.default.url'])
+    # if 'cn.dialect' in settings:
+    #     settings['sqlalchemy.Export.url'] = settings['cn.dialect'] + \
+    #         quote_plus(settings['sqlalchemy.Export.url'])
+    # if 'loadExportDB' in settings and settings['loadExportDB'] == 'False':
+    #     engineExport = engine_from_config(
+    #         settings, 'sqlalchemy.Export.', legacy_schema_aliasing=True)
+    if 'cn.dialect' in settings:
+        settings['sqlalchemy.default.url'] = settings['cn.dialect'] + \
+            quote_plus(settings['sqlalchemy.default.url'])
     engine = engine_from_config(
-        settings, 'sqlalchemy.default.', legacy_schema_aliasing=True)
+        settings, 'sqlalchemy.default.')
 
     dbConfig['url'] = settings['sqlalchemy.default.url']
     dbConfig['wsThesaurus'] = {}

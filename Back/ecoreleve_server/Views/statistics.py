@@ -102,85 +102,85 @@ def station_graph(request):
 
 @view_config(route_name='location_graph', renderer='json')
 def location_graph(request):
-    session = request.dbsession
-    data = []
-    query = select([Individual_Location.type_, func.count('*').label('nb')]
-                   ).group_by(Individual_Location.type_)
+#     session = request.dbsession
+#     data = []
+#     query = select([Individual_Location.type_, func.count('*').label('nb')]
+#                    ).group_by(Individual_Location.type_)
 
-    global graphDataDate
-    global indivLocationData
+#     global graphDataDate
+#     global indivLocationData
 
-    d = datetime.datetime.now() - datetime.timedelta(days=1)
-    nbArg = 0
-    if graphDataDate['indivLocationData'] is None or graphDataDate['indivLocationData'] < d:
-        graphDataDate['indivLocationData'] = datetime.datetime.now()
-        for row in session.execute(query).fetchall():
-            curRow = OrderedDict(row)
-            lab = curRow['type_'].upper()
-            if 'ARG' in lab:
-                try:
-                    nbArg = nbArg + curRow['nb']
-                except:
-                    nbArg = curRow['nb']
-            else:
-                data.append({'value': curRow['nb'], 'label': lab})
-        data.append({'value': nbArg, 'label': 'ARGOS'})
-        data.sort(key=itemgetter('label'))
-        indivLocationData = data
+#     d = datetime.datetime.now() - datetime.timedelta(days=1)
+#     nbArg = 0
+#     if graphDataDate['indivLocationData'] is None or graphDataDate['indivLocationData'] < d:
+#         graphDataDate['indivLocationData'] = datetime.datetime.now()
+#         for row in session.execute(query).fetchall():
+#             curRow = OrderedDict(row)
+#             lab = curRow['type_'].upper()
+#             if 'ARG' in lab:
+#                 try:
+#                     nbArg = nbArg + curRow['nb']
+#                 except:
+#                     nbArg = curRow['nb']
+#             else:
+#                 data.append({'value': curRow['nb'], 'label': lab})
+#         data.append({'value': nbArg, 'label': 'ARGOS'})
+#         data.sort(key=itemgetter('label'))
+#         indivLocationData = data
 
-    return indivLocationData
+#     return indivLocationData
 
 
-@view_config(route_name='uncheckedDatas_graph', renderer='json')
-def uncheckedDatas_graph(request):
-    viewArgos = Base.metadata.tables['VArgosData_With_EquipIndiv']
-    queryArgos = select([viewArgos.c['type'].label('type'),
-                         func.count('*').label('nb')]
-                        ).where(viewArgos.c['checked'] == 0
-                                ).group_by(viewArgos.c['type'])
+# @view_config(route_name='uncheckedDatas_graph', renderer='json')
+# def uncheckedDatas_graph(request):
+#     viewArgos = Base.metadata.tables['VArgosData_With_EquipIndiv']
+#     queryArgos = select([viewArgos.c['type'].label('type'),
+#                          func.count('*').label('nb')]
+#                         ).where(viewArgos.c['checked'] == 0
+#                                 ).group_by(viewArgos.c['type'])
 
-    viewGSM = Base.metadata.tables['VGSMData_With_EquipIndiv']
-    queryGSM = select([func.count('*').label('nb')]
-                      ).where(viewGSM.c['checked'] == 0)
+#     viewGSM = Base.metadata.tables['VGSMData_With_EquipIndiv']
+#     queryGSM = select([func.count('*').label('nb')]
+#                       ).where(viewGSM.c['checked'] == 0)
 
-    queryRFID = select([func.count('*').label('nb')]
-                       ).where(Rfid.checked == 0)
-    data = []
+#     queryRFID = select([func.count('*').label('nb')]
+#                        ).where(Rfid.checked == 0)
+#     data = []
 
-    session1 = threadlocal.get_current_registry().dbmaker()
-    session2 = threadlocal.get_current_registry().dbmaker()
-    session3 = threadlocal.get_current_registry().dbmaker()
+#     session1 = threadlocal.get_current_registry().dbmaker()
+#     session2 = threadlocal.get_current_registry().dbmaker()
+#     session3 = threadlocal.get_current_registry().dbmaker()
 
-    global graphDataDate
-    global pendingSensorData
+#     global graphDataDate
+#     global pendingSensorData
 
-    d = datetime.datetime.now() - datetime.timedelta(days=1)
+#     d = datetime.datetime.now() - datetime.timedelta(days=1)
 
-    if graphDataDate['pendingSensorData'] is None or graphDataDate['pendingSensorData'] < d:
-        graphDataDate['pendingSensorData'] = datetime.datetime.now()
+#     if graphDataDate['pendingSensorData'] is None or graphDataDate['pendingSensorData'] < d:
+#         graphDataDate['pendingSensorData'] = datetime.datetime.now()
 
-        argosData = session1.execute(queryArgos).fetchall()
-        for row in argosData:
-            curRow = OrderedDict(row)
-            lab = curRow['type'].upper()
-            if lab == 'ARG':
-                lab = 'ARGOS'
-            data.append({'value': curRow['nb'], 'label': lab})
+#         argosData = session1.execute(queryArgos).fetchall()
+#         for row in argosData:
+#             curRow = OrderedDict(row)
+#             lab = curRow['type'].upper()
+#             if lab == 'ARG':
+#                 lab = 'ARGOS'
+#             data.append({'value': curRow['nb'], 'label': lab})
 
-        for row in session2.execute(queryGSM).fetchall():
-            curRow = OrderedDict(row)
-            data.append({'value': curRow['nb'], 'label': 'GSM'})
+#         for row in session2.execute(queryGSM).fetchall():
+#             curRow = OrderedDict(row)
+#             data.append({'value': curRow['nb'], 'label': 'GSM'})
 
-        for row in session3.execute(queryRFID).fetchall():
-            curRow = OrderedDict(row)
-            data.append({'value': curRow['nb'], 'label': 'RFID'})
-        data.sort(key=itemgetter('label'))
-        pendingSensorData = data
+#         for row in session3.execute(queryRFID).fetchall():
+#             curRow = OrderedDict(row)
+#             data.append({'value': curRow['nb'], 'label': 'RFID'})
+#         data.sort(key=itemgetter('label'))
+#         pendingSensorData = data
 
-    session1.close()
-    session2.close()
-    session3.close()
-
+#     session1.close()
+#     session2.close()
+#     session3.close()
+    return []
     return pendingSensorData
 
 

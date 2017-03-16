@@ -29,32 +29,32 @@ class ArgosGps(Base):
     ele = Column(Integer)
     speed = Column(Integer)
     course = Column(Integer)
-    lc = Column('lc', String(1))
-    iq = Column('iq', Integer)
-    nbMsg = Column(Integer)
-    nbMsg120 = Column(Integer)
-    bestLvl = Column('bestLevel', Integer)
-    passDuration = Column(Integer)
-    nopc = Column('nopc', Integer)
-    frequency = Column('freq', Float)
-    checked = Column('checked', Boolean, nullable=False, default=False)
-    imported = Column('imported', Boolean, nullable=False, default=False)
+    # lc = Column('lc', String(1))
+    # iq = Column('iq', Integer)
+    # nbMsg = Column(Integer)
+    # nbMsg120 = Column(Integer)
+    # bestLvl = Column('bestLevel', Integer)
+    # passDuration = Column(Integer)
+    # nopc = Column('nopc', Integer)
+    # frequency = Column('freq', Float)
+    # checked = Column('checked', Boolean, nullable=False, default=False)
+    # imported = Column('imported', Boolean, nullable=False, default=False)
 
-    if dialect.startswith('mssql'):
-        __table_args__ = (
-            Index(
-                'idx_Targosgps_checked_with_pk_ptt_date',
-                checked,
-                ptt,
-                mssql_include=[pk_id, date]
-            ),
-            {'schema': sensor_schema, 'implicit_returning': False}
-        )
-    else:
-        __table_args__ = (
-            Index('idx_Targosgps_checked_ptt', checked, ptt),
-            {'schema': sensor_schema, 'implicit_returning': False}
-        )
+    # if dialect.startswith('mssql'):
+    #     __table_args__ = (
+    #         Index(
+    #             'idx_Targosgps_checked_with_pk_ptt_date',
+    #             checked,
+    #             ptt,
+    #             mssql_include=[pk_id, date]
+    #         ),
+    #         # {'schema': sensor_schema, 'implicit_returning': False}
+    #     )
+    # else:
+    #     __table_args__ = (
+    #         Index('idx_Targosgps_checked_ptt', checked, ptt),
+    #         # {'schema': sensor_schema, 'implicit_returning': False}
+    #     )
 
 
 class Gsm(Base):
@@ -66,26 +66,26 @@ class Gsm(Base):
     lon = Column('Longitude_E', Numeric(9, 5), nullable=False)
     ele = Column('Altitude_m', Integer)
     Speed = Column(Integer)
-    Course = Column(Integer)
-    checked = Column(Boolean, nullable=False, server_default='0')
-    imported = Column(Boolean, nullable=False, server_default='0')
-    SatelliteCount = Column(Integer)
-    HDOP = Column(Integer)
-    VDOP = Column(Integer)
-    validated = Column(Boolean, nullable=False, server_default='0')
+    # Course = Column(Integer)
+    # checked = Column(Boolean, nullable=False, server_default='0')
+    # imported = Column(Boolean, nullable=False, server_default='0')
+    # SatelliteCount = Column(Integer)
+    # HDOP = Column(Integer)
+    # VDOP = Column(Integer)
+    # validated = Column(Boolean, nullable=False, server_default='0')
 
-    if dialect.startswith('mssql'):
-        __table_args__ = (
-            Index('idx_Tgsm_checked_with_pk_ptt_date', checked, platform_,
-                  mssql_include=[pk_id, date]
-                  ),
-            {'schema': sensor_schema, 'implicit_returning': False}
-        )
-    else:
-        __table_args__ = (
-            Index('idx_Tgsm_checked_ptt', checked, platform_),
-            {'schema': sensor_schema, 'implicit_returning': False}
-        )
+    # if dialect.startswith('mssql'):
+    #     __table_args__ = (
+    #         Index('idx_Tgsm_checked_with_pk_ptt_date', checked, platform_,
+    #               mssql_include=[pk_id, date]
+    #               ),
+    #         # {'schema': sensor_schema, 'implicit_returning': False}
+    #     )
+    # else:
+    #     __table_args__ = (
+    #         Index('idx_Tgsm_checked_ptt', checked, platform_),
+    #         # {'schema': sensor_schema, 'implicit_returning': False}
+    #     )
 
 
 class GsmEngineering (Base):
@@ -96,13 +96,13 @@ class GsmEngineering (Base):
     date = Column('DateTime', DateTime, nullable=False)
     ActivityCount = Column(Integer, )
     Temperature_C = Column(Numeric)
-    BatteryVoltage_V = Column(Numeric)
-    file_date = Column(DateTime)
+    # BatteryVoltage_V = Column(Numeric)
+    # file_date = Column(DateTime)
 
-    __table_args__ = (
-        Index('idx_Tengineering_gsm_pttDate_ptt', date, platform_),
-        {'schema': sensor_schema, 'implicit_returning': False}
-    )
+    # __table_args__ = (
+    #     Index('idx_Tengineering_gsm_pttDate_ptt', date, platform_),
+    #     # {'schema': sensor_schema, 'implicit_returning': False}
+    # )
 
 
 class ArgosEngineering(Base):
@@ -116,20 +116,20 @@ class ArgosEngineering(Base):
     temp = Column(Float)
     batt = Column(Float)
     fixTime = Column(Integer)
-    satCount = Column(Integer)
-    resetHours = Column(Integer)
-    fixDays = Column(Integer)
-    season = Column(Integer)
-    shunt = Column(Boolean)
-    mortalityGT = Column(Boolean)
-    seasonalGT = Column(Boolean)
-    latestLat = Column(Float)
-    latestLon = Column(Float)
+    # satCount = Column(Integer)
+    # resetHours = Column(Integer)
+    # fixDays = Column(Integer)
+    # season = Column(Integer)
+    # shunt = Column(Boolean)
+    # mortalityGT = Column(Boolean)
+    # seasonalGT = Column(Boolean)
+    # latestLat = Column(Float)
+    # latestLon = Column(Float)
 
-    __table_args__ = (
-        Index('idx_Tgps_engineering_pttDate_ptt', pttDate, fk_ptt),
-        {'schema': sensor_schema, 'implicit_returning': False}
-    )
+    # __table_args__ = (
+    #     Index('idx_Tgps_engineering_pttDate_ptt', pttDate, fk_ptt),
+    #     # {'schema': sensor_schema, 'implicit_returning': False}
+    # )
 
 
 class Rfid(Base):
@@ -139,12 +139,12 @@ class Rfid(Base):
     FK_Sensor = Column(Integer, nullable=False)
     chip_code = Column(String(15), nullable=False)
     date_ = Column(DateTime, nullable=False)
-    creation_date = Column(DateTime, server_default=func.now())
-    validated = Column('validated', Boolean, server_default='0')
-    checked = Column('checked', Boolean, server_default='0')
-    frequency = Column(Integer)
-    __table_args__ = (
-        Index('idx_Trfid_chipcode_date', chip_code, date_),
-        UniqueConstraint(FK_Sensor, chip_code, date_),
-        {'schema': sensor_schema, 'implicit_returning': False}
-    )
+    # creation_date = Column(DateTime, server_default=func.now())
+    # validated = Column('validated', Boolean, server_default='0')
+    # checked = Column('checked', Boolean, server_default='0')
+    # frequency = Column(Integer)
+    # __table_args__ = (
+    #     Index('idx_Trfid_chipcode_date', chip_code, date_),
+    #     UniqueConstraint(FK_Sensor, chip_code, date_),
+    #     # {'schema': sensor_schema, 'implicit_returning': False}
+    # )
