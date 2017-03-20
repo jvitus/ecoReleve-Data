@@ -134,8 +134,8 @@ from .FieldActivity import *
 from .Individual import *
 from .Sensor import *
 from .MonitoredSite import *
-from .Equipment import *
-from .SensorData import *
+# from .Equipment import *
+# from .SensorData import *
 from .List import *
 from .Log import sendLog
 

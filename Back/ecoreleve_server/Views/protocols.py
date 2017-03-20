@@ -163,8 +163,8 @@ class ObservationsView(DynamicObjectCollectionView):
             if 'FormName' in self.request.params:
                 listObs = list(self.session.query(Observation).filter(
                     and_(Observation.FK_Station == sta_id, Observation.Parent_Observation == None)))
-                listType = list(self.session.query(FieldActivity_ProtocoleType
-                                                   ).filter(FieldActivity_ProtocoleType.FK_fieldActivity == curSta.fieldActivityId))
+                listType = None
+
                 Conf = self.getConf()
 
                 listProto = {}
