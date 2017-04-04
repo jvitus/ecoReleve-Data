@@ -70,8 +70,7 @@ def main(global_config, **settings):
     #     settings['sqlalchemy.Export.url'] = settings['cn.dialect'] + \
     #         quote_plus(settings['sqlalchemy.Export.url'])
     # if 'loadExportDB' in settings and settings['loadExportDB'] == 'False':
-    #     engineExport = engine_from_config(
-    #         settings, 'sqlalchemy.Export.', legacy_schema_aliasing=True)
+
     if 'cn.dialect' in settings:
         settings['sqlalchemy.default.url'] = settings['cn.dialect'] + \
             quote_plus(settings['sqlalchemy.default.url'])
@@ -103,6 +102,9 @@ def main(global_config, **settings):
             Export DataBase NOT loaded, Export Functionality will not working
             /!\================================/!\ \n''')
     else:
+        engineExport = engine_from_config(settings,
+                                          'sqlalchemy.Export.',
+                                          legacy_schema_aliasing=True)
         BaseExport.metadata.bind = engineExport
         BaseExport.metadata.create_all(engineExport)
         BaseExport.metadata.reflect(views=True, extend_existing=False)
