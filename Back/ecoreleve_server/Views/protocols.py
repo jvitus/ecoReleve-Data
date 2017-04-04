@@ -164,9 +164,11 @@ class ObservationsView(DynamicObjectCollectionView):
                 listObs = list(self.session.query(Observation).filter(
                     and_(Observation.FK_Station == sta_id, Observation.Parent_Observation == None)))
 
+                listType = None
 
-                listType = list(self.session.query(FieldActivity_ProtocoleType
-                                                   ).filter(FieldActivity_ProtocoleType.FK_fieldActivity == curSta.fieldActivityId))
+                if hasattr(curSta,'fieldActivityId') and curSta.fieldActivityId:
+                    listType = list(self.session.query(FieldActivity_ProtocoleType
+                                                    ).filter(FieldActivity_ProtocoleType.FK_fieldActivity == curSta.fieldActivityId))
 
                 listProto = {}
                 if listObs:
