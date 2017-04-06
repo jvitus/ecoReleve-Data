@@ -45,11 +45,10 @@ define([
             self.determineChange();
           }, 0);
         };
-    console.log(e)
     var newVal = this.$el.val();
     var numeric = /^\-?[^\-][0-9]*\.?[0-9]{0,5}$/.test(newVal);
 
-    if (!numeric){
+     if (!numeric && newVal!= ""){
       if (e.keyCode!=8 && e.keyCode != 110 && this.oldValue!='') {
         this.$el.val(this.oldValue);
       }

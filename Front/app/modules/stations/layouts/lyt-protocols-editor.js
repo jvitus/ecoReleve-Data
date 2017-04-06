@@ -5,9 +5,10 @@ define([
   'marionette',
   'config',
   './lyt-protocol',
+  './lyt-protocol-grid',
 
   'i18n'
-], function($, _, Backbone, Marionette, config, LytProto) {
+], function($, _, Backbone, Marionette, config, LytProto, LytProtoGrid) {
   'use strict';
   return Marionette.LayoutView.extend({
     template: 'app/modules/stations/templates/tpl-protocols-editor.html',
@@ -17,7 +18,6 @@ define([
       protoMenuContainer: '#protoMenuContainer',
       protoFormsContainer: 'div#protoFormsContainer',
       protoPicker: 'select#protoPicker'
-
     },
 
     events: {
@@ -34,7 +34,7 @@ define([
       this.collection = new Backbone.Collection();
       this.collection.fetch({
         url: config.coreUrl + 'stations/' + this.stationId + '/protocols',
-        reset: true, 
+        reset: true,
         data: {
           FormName: 'ObsForm',
           DisplayMode: 'edit'
@@ -49,6 +49,10 @@ define([
 
     displayFirst: function(){
       this.ui.protoMenuContainer.find('.js-menu-item:first').click();
+    },
+
+    displayLast: function(){
+      this.ui.protoMenuContainer.find('.js-menu-item:last').click();
     },
 
     initMenu: function() {
@@ -72,7 +76,7 @@ define([
         },
 
         updateTotal: function() {
-          this.ui.total.html(this.model.get('obs').length);
+          this.ui.total.html(this.model.get('total'));
         },
 
         updateVisibility: function() {
@@ -94,21 +98,37 @@ define([
     },
 
     initProtos: function() {
-      this.collViewProto = new Marionette.CollectionView({
+      this.listenTo(this.collection, 'destroy', this.displayLast);
+
+      // this.collection.models[0].set('grid', true);
+
+      var CustomCollectionView = Marionette.CollectionView.extend({
+        getChildView: function(item) {
+          if (item.get('grid')) {
+            return LytProtoGrid;
+          }
+          else {
+            return LytProto;
+          }
+        },
+      });
+
+      this.collViewProto = new CustomCollectionView({
         collection : this.collection,
         childViewOptions: { stationId: this.stationId },
         childView: LytProto,
         className: 'full-height clearfix',
       });
+
       this.collViewProto.render();
       this.ui.protoFormsContainer.html(this.collViewProto.el);
     },
 
-    
+
     getIndex: function(e){
       var listItem = $(e.currentTarget);
       var index = this.ui.protoMenuContainer.find('.js-menu-item').index( listItem );
-      
+
       this.updateProtoStatus(index);
       //add obs
       if ($(e.target).is('button') || $(e.target).parent().is('button')) {
@@ -122,11 +142,13 @@ define([
       }
 
       this.currentView = this.collViewProto.children.findByIndex(index);
-      this.currentView.model.set('current', true);
+      if(this.currentView) {
+        this.currentView.model.set('current', true);
+      }
     },
 
 
-    
+
     onRender: function(){
       this.feedProtoPicker();
     },
@@ -192,11 +214,11 @@ define([
           console.warn('request new proto error');
         }
       });
-    }, activateBtn : function(){
+    }, 
+    activateBtn : function(){
           $('#addProto').removeAttr('disabled');
           $('#protoPicker').removeClass('initselect');
     }
-    
 
   });
 });

@@ -22,6 +22,7 @@ define(['marionette', 'config',
   './modules/validate/lyt-sensorValidate',
   './modules/validate/lyt-sensorValidateType',
   './modules/validate/lyt-sensorValidateDetail',
+  './modules/validate/lyt-camTrapValidateDetail',
   './modules/release/layouts/lyt-release-station',
 
   './modules/export/lyt-export-stepper',
@@ -49,6 +50,7 @@ define(['marionette', 'config',
   LytSensorValidate,
   LytSensorValidateType,
   LytSensorValidateDetail,
+  LytCamTrapValidateDetail,
 
   LytReleaseStation,
 
@@ -79,6 +81,16 @@ define(['marionette', 'config',
     stations: function(id) {
       this.checkAjax();
       this.rgMain.show(new LytStations({id: id}));
+    },
+  observations: function(id) {
+    console.log('************** OBSERVATIONS ************************');
+     $.ajax({
+          context: this,
+          url: config.coreUrl + 'protocols/' + id,
+        }).done(function (data) {
+        window.location.href = window.location.origin + window.location.pathname + '#stations/' + data['FK_Station'] + '?observation=' + id ;
+      }) ;
+      //this.rgMain.show(new LytStations({id: id}));
     },
     newStation: function(from) {
       this.checkAjax();
@@ -135,14 +147,21 @@ define(['marionette', 'config',
     },
     checkAjax : function(){
       var xhrPool = window.xhrPool;
+/*<<<<<<< HEAD
       console.log('new route :');
       console.log(window.xhrPool);
+=======
+>>>>>>> a142b3fa06ae6cdf29bc2e3c25aea176e56c7b7d*/
 
       for(var i=0; i<xhrPool.length; i++){
          xhrPool[i].abort();
       }
        window.xhrPool = [];
     }
+/*<<<<<<< HEAD
+=======
+
+>>>>>>> a142b3fa06ae6cdf29bc2e3c25aea176e56c7b7d*/
 
   });
 });

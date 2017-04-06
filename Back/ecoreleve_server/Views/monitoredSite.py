@@ -9,7 +9,9 @@ from ..Models import (
     Equipment,
     Sensor,
     SensorType,
-    Base
+    Base,
+    fieldActivity,
+    MonitoredSiteList
     )
 from ..GenericObjets.FrontModules import FrontModules
 from ..GenericObjets import ListObjectWithDynProp
@@ -27,15 +29,16 @@ from traceback import print_exc
 from collections import OrderedDict
 import io
 from pyramid.response import Response ,FileResponse
+from ..controllers.security import routes_permission
+
 
 prefix = 'monitoredSites'
 
 # ------------------------------------------------------------------------------------------------------------------------- #
-@view_config(route_name= prefix+'/action', renderer='json', request_method = 'GET')
-@view_config(route_name= prefix+'/id/history/action', renderer='json', request_method = 'GET')
-@view_config(route_name= prefix+'/id/equipment/action', renderer='json', request_method = 'GET')
+@view_config(route_name= prefix+'/action', renderer='json', request_method = 'GET',permission = routes_permission[prefix]['GET'])
+@view_config(route_name= prefix+'/id/history/action', renderer='json', request_method = 'GET',permission = routes_permission[prefix]['GET'])
+@view_config(route_name= prefix+'/id/equipment/action', renderer='json', request_method = 'GET',permission = routes_permission[prefix]['GET'])
 def actionOnMonitoredSite(request):
-    print ('\n*********************** Action **********************\n')
     dictActionFunc = {
     'count' : count_,
     'forms' : getForms,
@@ -49,18 +52,18 @@ def actionOnMonitoredSite(request):
 
 def count_ (request = None,listObj = None) :
     session = request.dbsession
-    if request is not None : 
+    if request is not None :
         data = request.params
-        if 'criteria' in data: 
+        if 'criteria' in data:
             data['criteria'] = json.loads(data['criteria'])
             if data['criteria'] != {} :
                 searchInfo['criteria'] = [obj for obj in data['criteria'] if obj['Value'] != str(-1) ]
 
         listObj = ListObjectWithDynProp(MonitoredSite)
         count = listObj.count(searchInfo = searchInfo)
-    else : 
+    else :
         count = listObj.count()
-    return count 
+    return count
 
 def getFilters (request):
     session = request.dbsession
@@ -113,11 +116,11 @@ def getMonitoredSite(request):
         ModuleName = request.params['FormName']
         try :
             DisplayMode = request.params['DisplayMode']
-        except : 
+        except :
             DisplayMode = 'display'
         Conf = session.query(FrontModules).filter(FrontModules.Name=='MonitoredSiteForm').first()
         response = curMonitoredSite.GetDTOWithSchema(Conf,DisplayMode)
-    else : 
+    else :
         response  = curMonitoredSite.GetFlatObject()
     return response
 
@@ -148,7 +151,7 @@ def getMonitoredSiteHistory(request):
         for row in dataResult:
             geoJson.append({'type':'Feature', 'properties':{'Date':row['StartDate']}, 'geometry':{'type':'Point', 'coordinates':[row['LAT'],row['LON']]}})
         result = {'type':'FeatureCollection', 'features':geoJson}
-    else : 
+    else :
         countResult = listObj.count(searchInfo)
         result = [{'total_entries':countResult}]
         result.append(dataResult)
@@ -167,16 +170,21 @@ def getMonitoredSiteEquipment(request):
         ).select_from(joinTable
         ).where(table.c['FK_MonitoredSite'] == id_site
         ).order_by(desc(table.c['StartDate']))
-    
+
     result = session.execute(query).fetchall()
     response = []
     for row in result:
         curRow = OrderedDict(row)
+        curRow['StartDate'] = curRow['StartDate'].strftime('%Y-%m-%d %H:%M:%S')
+        if curRow['EndDate'] is not None :
+            curRow['EndDate'] = curRow['EndDate'].strftime('%Y-%m-%d %H:%M:%S')
+        else:
+             curRow['EndDate'] = ''
         response.append(curRow)
 
     return response
 # ------------------------------------------------------------------------------------------------------------------------- #
-@view_config(route_name= prefix+'/id', renderer='json', request_method = 'DELETE')
+@view_config(route_name= prefix+'/id', renderer='json', request_method = 'DELETE',permission = routes_permission[prefix]['DELETE'])
 def deleteMonitoredSite(request):
     session = request.dbsession
     id_ = request.matchdict['id']
@@ -185,7 +193,7 @@ def deleteMonitoredSite(request):
     return True
 
 # ------------------------------------------------------------------------------------------------------------------------- #
-@view_config(route_name= prefix+'/id', renderer='json', request_method = 'PUT')
+@view_config(route_name= prefix+'/id', renderer='json', request_method = 'PUT',permission = routes_permission[prefix]['PUT'])
 def updateMonitoredSite(request):
     session = request.dbsession
     try:
@@ -197,7 +205,6 @@ def updateMonitoredSite(request):
         response = {}
 
     except IntegrityError as e:
-        print('\n\n\n *****IntegrityError errrroorr') 
         session.rollback()
         response = request.response
         response.status_code = 510
@@ -205,7 +212,7 @@ def updateMonitoredSite(request):
     return response
 
 # ------------------------------------------------------------------------------------------------------------------------- #
-@view_config(route_name= prefix+'/', renderer='json', request_method = 'POST')
+@view_config(route_name= prefix+'/', renderer='json', request_method = 'POST',permission = routes_permission[prefix]['POST'])
 def insertMonitoredSite(request):
     data = request.json_body
     if not isinstance(data,list):
@@ -220,7 +227,7 @@ def insertOneNewMonitoredSite (request) :
     data = {}
     for items , value in request.json_body.items() :
         data[items] = value
-    try:        
+    try:
         newMonitoredSite = MonitoredSite(FK_MonitoredSiteType = data['FK_MonitoredSiteType'], Creator = request.authenticated_userid['iss'] )
         newMonitoredSite.MonitoredSiteType = session.query(MonitoredSiteType).filter(MonitoredSiteType.ID==data['FK_MonitoredSiteType']).first()
         newMonitoredSite.init_on_load()
@@ -246,7 +253,7 @@ def searchMonitoredSite(request):
     searchInfo = {}
     searchInfo['criteria'] = []
 
-    if 'criteria' in data: 
+    if 'criteria' in data:
         data['criteria'] = json.loads(data['criteria'])
         if data['criteria'] != {} :
             searchInfo['criteria'] = [obj for obj in data['criteria'] if obj['Value'] != str(-1) ]
@@ -259,7 +266,9 @@ def searchMonitoredSite(request):
     moduleFront  = session.query(FrontModules).filter(FrontModules.Name == ModuleType).one()
 
     start = datetime.now()
-    listObj = ListObjectWithDynProp(MonitoredSite,moduleFront,View=Base.metadata.tables['MonitoredSitePositionsNow'])
+    # listObj = ListObjectWithDynProp(MonitoredSite,moduleFront,View=Base.metadata.tables['MonitoredSitePositionsNow'])
+    listObj = MonitoredSiteList(moduleFront,View=Base.metadata.tables['MonitoredSitePositionsNow'])
+
     dataResult = listObj.GetFlatDataList(searchInfo)
     countResult = listObj.count(searchInfo)
 
@@ -270,12 +279,12 @@ def searchMonitoredSite(request):
 
 # ------------------------------------------------------------------------------------------------------------------------- #
 @view_config(route_name=prefix + '/export', renderer='json', request_method='GET')
-def sensors_export(request):
+def sites_export(request):
     session = request.dbsession
     data = request.params.mixed()
     searchInfo = {}
     searchInfo['criteria'] = []
-    if 'criteria' in data: 
+    if 'criteria' in data:
         data['criteria'] = json.loads(data['criteria'])
         if data['criteria'] != {} :
             searchInfo['criteria'] = [obj for obj in data['criteria'] if obj['Value'] != str(-1) ]
@@ -300,4 +309,19 @@ def sensors_export(request):
     return Response(file,content_disposition= "attachment; filename=monitoredSites_export_"+dt+".xlsx",content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
 
 
+@view_config(route_name= prefix+'/id/station', renderer='json', request_method = 'GET')
+def getStationHistory (request):
+    session = request.dbsession
+    id_site = request.matchdict['id']
+    joinTable = join(Station,fieldActivity,Station.fieldActivityId == fieldActivity.ID)
+    query = select([Station.StationDate, Station.LAT,Station.LON,Station.ID,Station.Name
+        ,fieldActivity.Name.label('fieldActivity_Name')]).select_from(joinTable).where(Station.FK_MonitoredSite == id_site)
 
+    result = session.execute(query).fetchall()
+    response = []
+    for row in result :
+        row = dict(row)
+        row['StationDate'] = row['StationDate'].strftime('%Y-%m-%d %H:%M:%S')
+        response.append(row)
+
+    return response

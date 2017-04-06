@@ -27,6 +27,7 @@ define([
       'click button#saveFromCriterias': 'saveFromCriteras',
       'click button#createNew': 'createNew',
       'click #indivTypeTabs a.tab-link' : 'indivTypeTabs',
+      'click button#detailsShow': 'openDetails',
     },
 
     initialize: function(options) {
@@ -109,6 +110,7 @@ define([
         url: this.url,
         typeObj: this.typeObj,
         rowClicked: true,
+        ajaxType:'POST'
       });
 
       this.grid.rowClicked = function(args) {
@@ -126,12 +128,17 @@ define([
 
     displayFilter: function() {
       this.$el.find('#filter').html('');
+      var firstOperator = undefined;
+      if (this.typeObj == 2 ){
+        firstOperator = 'is null';
+      }
 
       this.filters = new NsFilter({
         url: this.url,
         com: this.com,
         typeObj: this.typeObj,
         filterContainer: this.$el.find('#filter'),
+        firstOperator : firstOperator
       });
     },
 
@@ -215,6 +222,13 @@ define([
       this.com = new Com();
       this.displayGrid();
       this.displayFilter();
+    },
+
+       openDetails: function(event) {
+      console.log($(this._input).attr('data_value'))
+      var url = 'http://'+window.location.hostname+window.location.pathname+'#individuals/'+ $(this._input).val();
+      var win = window.open(url, '_blank');
+      win.focus();
     },
   });
 });

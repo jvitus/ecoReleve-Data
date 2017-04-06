@@ -38,6 +38,19 @@ table.backgrid{
 		td{
 			border: 0px;
 		}
+		a {
+			color:#337ab7;
+			&:hover{
+			color:##23527c;
+			text-decoration: underline;
+			}
+			&:focus{
+			color:##23527c;
+			text-decoration: underline;
+			}
+		}
+
+
 	}
 	tr{
 
@@ -65,7 +78,7 @@ table.backgrid{
 	ul{
 		padding: 0px;
 		li{
-			curor: pointer;
+			cursor: pointer;
 		}
 	}
 }
@@ -148,11 +161,20 @@ table.backgrid{
     margin-bottom: 10px;
     padding: 15px 0px;
 
-    legend{ 
+    legend{
 		margin:0;
     }
     button{
     	height:30px;
     	margin-right:10px;
     }
+}
+
+.release-grid .backgrid td.error {
+    background-color: rgba(247, 137, 69, 0.22)!important;
+    outline: 1px solid #bf3333!important;
+}
+
+.release-grid .backgrid th{
+	padding-left:0px;
 }

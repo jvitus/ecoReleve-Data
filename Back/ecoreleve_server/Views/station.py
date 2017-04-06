@@ -24,6 +24,7 @@ from traceback import print_exc
 from sqlalchemy.exc import IntegrityError
 import io
 from pyramid.response import Response ,FileResponse
+from ..controllers.security import routes_permission
 
 
 
@@ -31,7 +32,7 @@ prefix = 'stations'
 
 
 # ------------------------------------------------------------------------------------------------------------------------- #
-@view_config(route_name= prefix+'/action', renderer='json', request_method = 'GET')
+@view_config(route_name= prefix+'/action', renderer='json', request_method = 'GET', permission = routes_permission[prefix]['GET'])
 def actionOnStations(request):
     dictActionFunc = {
     'count' : count_,
@@ -86,7 +87,7 @@ def getFields(request) :
     return cols
 
 # ------------------------------------------------------------------------------------------------------------------------- #
-@view_config(route_name= prefix+'/id', renderer='json', request_method = 'GET')
+@view_config(route_name= prefix+'/id', renderer='json', request_method = 'GET', permission = routes_permission[prefix]['GET'])
 def getStation(request):
     session = request.dbsession
     id = request.matchdict['id']
@@ -117,7 +118,7 @@ def getStation(request):
     return response
 
 # ------------------------------------------------------------------------------------------------------------------------- #
-@view_config(route_name= prefix+'/id', renderer='json', request_method = 'DELETE')
+@view_config(route_name= prefix+'/id', renderer='json', request_method = 'DELETE', permission = routes_permission[prefix]['DELETE'])
 def deleteStation(request):
     session = request.dbsession
     id_ = request.matchdict['id']
@@ -127,7 +128,7 @@ def deleteStation(request):
     return True
 
 # ------------------------------------------------------------------------------------------------------------------------- #
-@view_config(route_name= prefix+'/id', renderer='json', request_method = 'PUT')
+@view_config(route_name= prefix+'/id', renderer='json', request_method = 'PUT',permission = routes_permission[prefix]['PUT'])
 def updateStation(request):
     session = request.dbsession
     data = request.json_body
@@ -141,14 +142,13 @@ def updateStation(request):
         session.commit()
         msg = {}
     except IntegrityError as e:
-        print('\n\n\n Integerity errrorrrrrrr ------------------------------')
         session.rollback()
         request.response.status_code = 510
         msg = {'existingStation' : True}
     return msg
 
 # ------------------------------------------------------------------------------------------------------------------------- #
-@view_config(route_name= prefix, renderer='json', request_method = 'POST')
+@view_config(route_name= prefix, renderer='json', request_method = 'POST', permission = routes_permission[prefix]['POST'])
 def insertStation(request):
     data = request.json_body
     if not isinstance(data,list):
@@ -172,7 +172,6 @@ def insertOneNewStation (request) :
         session.flush()
         msg = {'ID': newSta.ID}
     except IntegrityError as e:
-        print('\n\n\n Integerity errrorrrrrrr ------------------------------')
         session.rollback()
         request.response.status_code = 510
         msg = {'existingStation' : True}
@@ -286,7 +285,7 @@ def insertListNewStations(request):
     return response
 
 # ------------------------------------------------------------------------------------------------------------------------- #
-@view_config(route_name= prefix, renderer='json', request_method = 'GET')
+@view_config(route_name= prefix, renderer='json', request_method = 'GET', permission = routes_permission[prefix]['GET'])
 def searchStation(request):
     session = request.dbsession
 
@@ -382,7 +381,6 @@ def searchStation(request):
 def updateMonitoredSite(request):
     session = request.dbsession
     data = request.params.mixed()
-    print(data)
     curSta = session.query(Station).get(data['id'])
     # data = request.json_body
     # idSite = data['siteId']
@@ -396,7 +394,6 @@ def updateMonitoredSite(request):
         session.commit()
         return 'Monitored site position was updated'
     except IntegrityError as e :
-        print('Integrity EROROROROROR')
         session.rollback()
 
         return 'This location already exists'
@@ -404,8 +401,8 @@ def updateMonitoredSite(request):
 
 # ------------------------------------------------------------------------------------------------------------------------- #
 
-@view_config(route_name=prefix + '/export', renderer='json', request_method='GET')
-def sensors_export(request):
+@view_config(route_name=prefix + '/export', renderer='json', request_method='GET', permission = routes_permission[prefix]['GET'])
+def stations_export(request):
     session = request.dbsession
     data = request.params.mixed()
     searchInfo = {}

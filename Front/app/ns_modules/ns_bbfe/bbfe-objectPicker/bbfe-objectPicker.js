@@ -25,6 +25,7 @@ define([
       'click #btnFilterPicker': 'filter',
       'click .cancel': 'hidePicker',
       'click button#new': 'onClickNew',
+      'click button#detailsShow': 'openDetails',
     },
 
     initialize: function(options) {
@@ -222,7 +223,7 @@ define([
       var data = _this.form.getValue();
       if (data['StationDate']) {
         data['StartDate'] = data['StationDate'];
-        data['Name'] = '';
+        //data['Name'] = '';
       } else {
         data = {};
       }
@@ -347,6 +348,12 @@ define([
         }
       //}
     },
+
+    openDetails: function(event) {
+      var url = 'http://'+window.location.hostname+window.location.pathname+'#'+this.ojectName+'/'+ $(this._input).attr('data_value');
+      var win = window.open(url, '_blank');
+      win.focus();
+    }
   }
   );
 });

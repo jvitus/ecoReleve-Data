@@ -37,10 +37,24 @@ define([
       }
       this.model.set('ojectName', this.ojectName);
       this.picker = options.picker;
-      console.log(this.picker);
 
       this.data = options.data;
-      console.log(this.data);
+      var curURL = window.location.href.split('stations/')[1];
+      var stationID = curURL.split('/')[0];
+      if (this.data){
+        this.data['stationID'] = stationID;
+      } else {
+        this.data = {'stationID':stationID};
+      }
+
+      if (this.data){
+        for(var i in this.data){
+          if(this.data[i] == 'null'){
+            this.data[i] = '';
+          }
+        }
+        
+      }
     },
 
     onShow: function() {
@@ -105,7 +119,6 @@ define([
       this.nsForm.butClickSave();
     },
     cancel: function() {
-      console.log(this.picker);
       if(this.picker){
         this.picker.$el.find('#creation').addClass('hidden');
       }

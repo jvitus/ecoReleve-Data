@@ -10,10 +10,11 @@ define([
   'ns_navbar/ns_navbar',
 
   './lyt-protocols-editor',
+  'ns_ruler/ruler',
   'i18n'
 
 ], function($, _, Backbone, Marionette, Radio,
-  Swal, config, NsForm, Navbar, LytProtoEditor
+  Swal, config, NsForm, Navbar, LytProtoEditor,Ruler
 ) {
 
   'use strict';
@@ -92,13 +93,26 @@ define([
         objectType: stationType,
         id: stationId,
         reloadAfterSave: true,
-        afterShow : function(){
+        });
+
+        this.nsForm.BeforeShow = function(){
+          
+        };
+
+        this.nsForm.afterShow = function(){
           $(".datetime").attr('placeholder','DD/MM/YYYY');
           $("#dateTimePicker").on("dp.change", function (e) {
             $('#dateTimePicker').data("DateTimePicker").format('DD/MM/YYYY').maxDate(new Date());
            });
-        }
-      });
+          _this.filedAcitivityId = this.model.get('fieldActivityId');
+/*
+          var ruler = new Ruler({
+            form: this.BBForm
+          });
+          ruler.addRule('NbFieldWorker','count','FieldWorkers');*/
+        };
+
+ 
       this.nsForm.afterDelete = function() {
         var jqxhr = $.ajax({
           url: config.coreUrl + 'stations/' + _this.stationId,
@@ -131,9 +145,15 @@ define([
         });
       };
 
-      this.nsForm.model.on('change:fieldActivityId', function() {
-        _this.displayProtos();
-      });
+
+
+      this.nsForm.afterSaveSuccess = function() {
+        if(this.model.get('fieldActivityId') != _this.fieldActivityId){
+          _this.displayProtos();
+          _this.fieldActivityId = this.model.get('fieldActivityId');
+        }
+      },
+
       //then display protocols
       _this.displayProtos();
     },
@@ -143,9 +163,6 @@ define([
 
       this.rgProtoEditor.show(this.lytProtoEditor);
     },
-
-
-
 
   });
 });

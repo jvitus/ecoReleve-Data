@@ -10,7 +10,8 @@ from ..Models import (
     Equipment,
     IndividualList,
     Base,
-    IndivLocationList
+    IndivLocationList,
+    Station
     )
 from ..GenericObjets.FrontModules import FrontModules
 from ..GenericObjets import ListObjectWithDynProp
@@ -30,14 +31,14 @@ from ..utils.generator import Generator
 import io
 from pyramid.response import Response ,FileResponse
 from pyramid import threadlocal
-
+from ..controllers.security import routes_permission
 
 prefix = 'individuals'
 
 # ------------------------------------------------------------------------------------------------------------------------- #
-@view_config(route_name= prefix+'/action', renderer='json', request_method = 'GET', permission = NO_PERMISSION_REQUIRED)
-@view_config(route_name= prefix+'/id/history/action', renderer='json', request_method = 'GET', permission = NO_PERMISSION_REQUIRED)
-@view_config(route_name= prefix+'/id/equipment/action', renderer='json', request_method = 'GET', permission = NO_PERMISSION_REQUIRED)
+@view_config(route_name= prefix+'/action', renderer='json', request_method = 'GET',permission = routes_permission[prefix]['GET'])
+@view_config(route_name= prefix+'/id/history/action', renderer='json', request_method = 'GET',permission = routes_permission[prefix]['GET'])
+@view_config(route_name= prefix+'/id/equipment/action', renderer='json', request_method = 'GET',permission = routes_permission[prefix]['GET'])
 def actionOnIndividuals(request):
     dictActionFunc = {
     'count' : count_,
@@ -75,8 +76,11 @@ def getFilters (request):
         objType = request.params['typeObj']
     else : 
         objType = 1
+    if 'FilterName' in request.params and request.params['FilterName'] != '':
+        ModuleType = request.params['FilterName']
+    else:
+        ModuleType = 'IndivFilter'
 
-    ModuleType = 'IndivFilter'
     filtersList = Individual(FK_IndividualType = objType).GetFilters(ModuleType)
     filters = {}
     for i in range(len(filtersList)) :
@@ -102,7 +106,7 @@ def getFields(request) :
         objType = 1
 
     ModuleType = request.params['name']
-    if ModuleType == 'default' :
+    if ModuleType in ['default','AdvancedIndivFilter'] :
         ModuleType = 'IndivFilter'
     cols = Individual(FK_IndividualType = objType).GetGridFields(ModuleType)
     return cols
@@ -115,7 +119,7 @@ def getIndividualType(request):
     return response
 
 # ------------------------------------------------------------------------------------------------------------------------- #
-@view_config(route_name= prefix+'/id', renderer='json', request_method = 'GET')
+@view_config(route_name= prefix+'/id', renderer='json', request_method = 'GET',permission = routes_permission[prefix]['GET'])
 def getIndiv(request):
     session = request.dbsession
     id = request.matchdict['id']
@@ -174,7 +178,7 @@ def getIndiv(request):
     return response
 
 # ------------------------------------------------------------------------------------------------------------------------- #
-@view_config(route_name= prefix+'/id/history', renderer='json', request_method = 'GET')
+@view_config(route_name= prefix+'/id/history', renderer='json', request_method = 'GET',permission = routes_permission[prefix]['GET'])
 def getIndivHistory(request):
     session = request.dbsession
     id = request.matchdict['id']
@@ -202,7 +206,7 @@ def getIndivHistory(request):
     return response
 
 # ------------------------------------------------------------------------------------------------------------------------- #
-@view_config(route_name= prefix+'/id/equipment', renderer='json', request_method = 'GET')
+@view_config(route_name= prefix+'/id/equipment', renderer='json', request_method = 'GET',permission = routes_permission[prefix]['GET'])
 def getIndivEquipment(request):
     session = request.dbsession
     id_indiv = request.matchdict['id']
@@ -222,12 +226,14 @@ def getIndivEquipment(request):
         curRow['StartDate'] = curRow['StartDate'].strftime('%Y-%m-%d %H:%M:%S')
         if curRow['EndDate'] is not None :
             curRow['EndDate'] = curRow['EndDate'].strftime('%Y-%m-%d %H:%M:%S') 
+        else:
+            curRow['EndDate'] = ''
         response.append(curRow)
 
     return response
 
 # ------------------------------------------------------------------------------------------------------------------------- #
-@view_config(route_name= prefix+'/id', renderer='json', request_method = 'DELETE',permission = NO_PERMISSION_REQUIRED)
+@view_config(route_name= prefix+'/id', renderer='json', request_method = 'DELETE',permission = routes_permission[prefix]['DELETE'])
 def deleteIndiv(request):
     session = request.dbsession
     id_ = request.matchdict['id']
@@ -237,7 +243,7 @@ def deleteIndiv(request):
     return True
 
 # ------------------------------------------------------------------------------------------------------------------------- #
-@view_config(route_name= prefix+'/id', renderer='json', request_method = 'PUT')
+@view_config(route_name= prefix+'/id', renderer='json', request_method = 'PUT',permission = routes_permission[prefix]['PUT'])
 def updateIndiv(request):
     session = request.dbsession
     data = request.json_body
@@ -248,7 +254,7 @@ def updateIndiv(request):
     return {}
 
 # ------------------------------------------------------------------------------------------------------------------------- #
-@view_config(route_name= prefix  + '/insert', renderer='json', request_method = 'POST')
+@view_config(route_name= prefix  + '/insert', renderer='json', request_method = 'POST',permission = routes_permission[prefix]['POST'])
 def insertIndiv(request):
     session = request.dbsession
     data = request.json_body
@@ -262,16 +268,23 @@ def insertIndiv(request):
 # ------------------------------------------------------------------------------------------------------------------------- #
 def insertOneNewIndiv (request) :
     session = request.dbsession
+    session.autoflush = False # if set True create automatically a new indiv  = not what we want 
     data = {}
+    startDate = None 
+
     for items , value in request.json_body.items() :
         data[items] = value
     existingIndivID = None
+
+    if 'stationID' in data:
+        curSta = session.query(Station).get(data['stationID'])
+        startDate=curSta.StationDate
 
     indivType = int(data['FK_IndividualType'])
     newIndiv = Individual(FK_IndividualType = indivType , creationDate = datetime.now(),Original_ID = '0')
     # newIndiv.IndividualType = session.execute(([IndividualType.ID]).where(IndividualType.ID==indivType)).fetchone()
     newIndiv.init_on_load()
-    newIndiv.UpdateFromJson(data)
+    newIndiv.UpdateFromJson(data,startDate=startDate)
 
     if indivType == 2:
         existingIndivID = checkExisting(newIndiv)
@@ -282,69 +295,88 @@ def insertOneNewIndiv (request) :
 
     if existingIndivID is None:
         session.add(newIndiv)
-        indivID = newIndiv.ID
         session.flush()
+        indivID = newIndiv.ID
 
     return {'ID': indivID}
 
 def checkExisting(indiv):
+    # session = threadlocal.get_current_registry().dbmaker.session_factory()
     session = threadlocal.get_current_registry().dbmaker()
-    indivData = indiv.GetFlatObject()
-    del indivData['ID']
-    del indivData['creationDate']
+    indivData = indiv.PropDynValuesOfNow
+
+    # del indivData['creationDate']
     for key in indivData:
         if indivData[key] is None: 
             indivData[key] = 'null'
     
     searchInfo = {'criteria':[{'Column':key,'Operator':'is','Value':val} for key,val in indivData.items()],'order_by':['ID:asc']}
-    # print(searchInfo['criteria'])
+ 
     ModuleType = 'IndivFilter'
     moduleFront  = session.query(FrontModules).filter(FrontModules.Name == ModuleType).one()
 
-    listObj = IndividualList(moduleFront)
+    listObj = IndividualList(moduleFront,typeObj = 2)
     dataResult = listObj.GetFlatDataList(searchInfo)
-    if dataResult is not []:
+
+    if len(dataResult)>0:
         existingID = dataResult[0]['ID']
     else :
         existingID = None
-    session.close()
+
     return existingID
 
 # ------------------------------------------------------------------------------------------------------------------------- #
-@view_config(route_name= prefix, renderer='json', request_method = 'GET', permission = NO_PERMISSION_REQUIRED)
-def searchIndiv(request):
+@view_config(route_name= prefix, renderer='json', request_method = 'GET', permission = routes_permission[prefix]['GET'])
+@view_config(route_name= prefix, renderer='json', request_method = 'POST', permission = routes_permission[prefix]['GET'])
+def searchIndiv(request,searchInfo=None,noCount=False):
     session = request.dbsession
-    data = request.params.mixed()
+    history = False
+    startDate = None
 
-    searchInfo = {}
-    searchInfo['criteria'] = []
-    if 'criteria' in data: 
-        data['criteria'] = json.loads(data['criteria'])
-        if data['criteria'] != {} :
-            searchInfo['criteria'] = [obj for obj in data['criteria'] if obj['Value'] != str(-1) ]
+    if searchInfo is None:
+        searchInfo = request.params.mixed()
+        # searchInfo = {}
+        # searchInfo['criteria'] = []
+        if 'criteria' in searchInfo: 
+            searchInfo['criteria'] = json.loads(searchInfo['criteria'])
+            if searchInfo['criteria'] != {} :
+                searchInfo['criteria'] = [obj for obj in searchInfo['criteria'] if obj['Value'] != str(-1) ]
+            else :
+                 searchInfo['criteria'] = []
 
-    searchInfo['order_by'] = json.loads(data['order_by'])
-    searchInfo['offset'] = json.loads(data['offset'])
-    searchInfo['per_page'] = json.loads(data['per_page'])
+        searchInfo['order_by'] = json.loads(searchInfo['order_by'])
+        searchInfo['offset'] = json.loads(searchInfo['offset'])
+        searchInfo['per_page'] = json.loads(searchInfo['per_page'])
+
+    if 'startDate' in searchInfo and searchInfo['startDate']!='':
+        startDate = datetime.strptime(searchInfo['startDate'],'%d/%m/%Y %H:%M:%S')
+
+    if 'history' in searchInfo and searchInfo['history'] == '1':
+        history = True
 
     if 'typeObj' in request.params:
+        typeObj = request.params['typeObj']
         searchInfo['criteria'].append({'Column':'FK_IndividualType','Operator': '=', 'Value':request.params['typeObj']})
     else:
         searchInfo['criteria'].append({'Column':'FK_IndividualType','Operator': '=', 'Value':1})
+        typeObj = 1
 
     ModuleType = 'IndivFilter'
     moduleFront  = session.query(FrontModules).filter(FrontModules.Name == ModuleType).one()
 
-    listObj = IndividualList(moduleFront)
+    listObj = IndividualList(moduleFront,typeObj = typeObj,history=history,startDate=startDate)
     dataResult = listObj.GetFlatDataList(searchInfo)
-    countResult = listObj.count(searchInfo)
 
-    result = [{'total_entries':countResult}]
-    result.append(dataResult)
+    if not noCount:
+        countResult = listObj.count(searchInfo)
+        result = [{'total_entries':countResult}]
+        result.append(dataResult)
+    else :
+        result = dataResult
     return result
 
 
-@view_config(route_name= prefix+'/id/location/action', renderer='json', request_method = 'GET', permission = NO_PERMISSION_REQUIRED)
+@view_config(route_name= prefix+'/id/location/action', renderer='json', request_method = 'GET',permission = routes_permission[prefix]['GET'])
 def actionOnIndividualsLoc(request):
     dictActionFunc = {
     'getFields': getFieldsLoc,
@@ -359,7 +391,7 @@ def getFieldsLoc(request) :
     gene = IndivLocationList('Individual_Location',session,None)
     return gene.get_col()
 # ------------------------------------------------------------------------------------------------------------------------- #
-@view_config(route_name= prefix+'/id/location', renderer='json', request_method = 'GET')
+@view_config(route_name= prefix+'/id/location', renderer='json',permission = routes_permission[prefix]['GET'])
 def getIndivLocation(request):
 
     id_ = request.matchdict['id']
@@ -383,12 +415,13 @@ def getIndivLocation(request):
         order_by= None
 
     if 'geo' in request.params :
-        result = gene.get_geoJSON(criteria,['ID','UnicIdentifier','Date','type_'])
+        result = gene.get_geoJSON(criteria,['ID','Date','type_'])
 
     else:
-        result = gene.search(criteria,offset=offset,per_page=per_page,order_by=order_by)
+        result = gene.search(criteria,offset=offset,per_page=per_page,order_by=['StationDate:desc'])
         for row in result : 
             row['Date'] = row['Date'].strftime('%Y-%m-%d %H:%M:%S')
+            row['format'] = 'YYYY-MM-DD HH:mm:ss'
 
 
     # ************ POC Indiv location PLayer  **************** 
@@ -421,17 +454,15 @@ def getIndivLocation(request):
     return result
 
 
-@view_config(route_name= prefix+'/id/location', renderer='json', request_method = 'PUT')
+@view_config(route_name= prefix+'/id/location', renderer='json', request_method = 'PUT',permission = routes_permission[prefix]['PUT'])
 def delIndivLocationList(request):
     session = request.dbsession
 
     IdList = json.loads(request.params['IDs'])
-
-    print(IdList)
     session.query(Individual_Location).filter(Individual_Location.ID.in_(IdList)).delete(synchronize_session=False)
 
 
-@view_config(route_name= prefix+'/id/location/id_loc', renderer='json', request_method = 'GET')
+@view_config(route_name= prefix+'/id/location/id_loc', renderer='json', request_method = 'GET',permission = routes_permission[prefix]['PUT'])
 def delIndivLocation(request):
     session = request.dbsession
     Id = request.matchdict['id_loc']
@@ -439,23 +470,20 @@ def delIndivLocation(request):
 
 
 @view_config(route_name=prefix + '/export', renderer='json', request_method='GET')
-def sensors_export(request):
+def individuals_export(request):
     session = request.dbsession
-    data = request.params.mixed()
-    searchInfo = {}
-    searchInfo['criteria'] = []
-    if 'criteria' in data: 
-        data['criteria'] = json.loads(data['criteria'])
-        if data['criteria'] != {} :
-            searchInfo['criteria'] = [obj for obj in data['criteria'] if obj['Value'] != str(-1) ]
+    searchInfo = request.params.mixed()
+    if 'criteria' in searchInfo: 
+        searchInfo['criteria'] = json.loads(searchInfo['criteria'])
+        if searchInfo['criteria'] != {} :
+            searchInfo['criteria'] = [obj for obj in searchInfo['criteria'] if obj['Value'] != str(-1) ]
 
-    searchInfo['order_by'] = []
+    dataResult = searchIndiv(request,searchInfo=searchInfo,noCount=True)
+    # ModuleType = 'IndivFilter'
+    # moduleFront  = session.query(FrontModules).filter(FrontModules.Name == ModuleType).one()
 
-    ModuleType = 'IndivFilter'
-    moduleFront  = session.query(FrontModules).filter(FrontModules.Name == ModuleType).one()
-
-    listObj = IndividualList(moduleFront)
-    dataResult = listObj.GetFlatDataList(searchInfo)
+    # listObj = IndividualList(moduleFront)
+    # dataResult = listObj.GetFlatDataList(searchInfo)
 
     df = pd.DataFrame.from_records(dataResult, columns=dataResult[0].keys(), coerce_float=True)
 

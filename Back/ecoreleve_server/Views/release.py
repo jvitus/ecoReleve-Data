@@ -8,7 +8,8 @@ from ..Models import (
     Sensor,
     Equipment,
     IndividualList,
-    ErrorAvailable
+    ErrorAvailable,
+    invertedThesaurusDict
     )
 from ..GenericObjets.FrontModules import FrontModules
 from ..GenericObjets import ListObjectWithDynProp
@@ -25,10 +26,14 @@ from traceback import print_exc
 from collections import OrderedDict
 import pandas as pd
 from collections import Counter
+from ..controllers.security import routes_permission
+from ..Models.Equipment import checkSensor,checkEquip
 
-prefix = 'release/'
 
-@view_config(route_name= prefix+'individuals/action', renderer='json', request_method = 'GET')
+
+prefix = 'release'
+
+@view_config(route_name= prefix+'/individuals/action', renderer='json', request_method='GET', permission=routes_permission[prefix]['GET'])
 def actionOnStations(request):
     dictActionFunc = {
     # 'count' : count_,
@@ -53,21 +58,21 @@ def getFields(request):
     if ModuleType == 'default' :
         ModuleType = 'IndivReleaseGrid'
     cols = Individual().GetGridFields('IndivReleaseGrid')
-    cols.append({
-        'name': 'unicSensorName',
-        'label': '| Sensor',
-        'editable': False,
-        'renderable': True,
-        'cell' : 'string'
-        })
-    cols.append({
-        'name': 'FK_Sensor',
-        'label': '| FK_Sensor',
-        'editable': False,
-        'renderable': False,
-        'cell' : 'string'
-        })
-    cols.append({
+    # cols.append({
+    #     'name': 'unicSensorName',
+    #     'label': '| Sensor',
+    #     'editable': False,
+    #     'renderable': True,
+    #     'cell' : 'string'
+    #     })
+    # cols.append({
+    #     'name': 'FK_Sensor',
+    #     'label': '| FK_Sensor',
+    #     'editable': False,
+    #     'renderable': False,
+    #     'cell' : 'string'
+    #     })
+    cols.insert(0,{
         'name' :'import',
         'label' : 'import',
         'renderable': True,
@@ -87,7 +92,7 @@ def getReleaseMethod(request):
     result = session.execute(query).fetchall()
     return [dict(row) for row in result]
 
-@view_config(route_name= prefix+'individuals', renderer='json', request_method = 'GET')
+@view_config(route_name= prefix+'/individuals', renderer='json', request_method ='GET', permission=routes_permission[prefix]['GET'])
 def searchIndiv(request):
     session = request.dbsession
     data = request.params.mixed()
@@ -123,16 +128,32 @@ def searchIndiv(request):
     return result
 
 
-@view_config(route_name= prefix+'individuals', renderer='json', request_method = 'POST')
+@view_config(route_name= prefix+'/individuals', renderer='json', request_method ='POST',permission=routes_permission[prefix]['POST'])
 def releasePost(request):
     session = request.dbsession
     data = request.params.mixed()
+
+    if 'StationID' not in data and 'IndividualList' not in data:
+        if data == {}:
+            data = request.json_body
+        if 'FK_Sensor' in data and data['FK_Sensor'] is not None :
+            return isavailableSensor(request,data)
+        return 
+
     sta_id = int(data['StationID'])
-    indivList = json.loads(data['IndividualList'])
+    indivListFromData = json.loads(data['IndividualList'])
     releaseMethod = data['releaseMethod']
     curStation = session.query(Station).get(sta_id)
     taxon = False
-    taxons = dict(Counter(indiv['Species'] for indiv in indivList))
+    taxons = dict(Counter(indiv['Species'] for indiv in indivListFromData))
+
+    userLang = request.authenticated_userid['userlanguage']
+    # get fullPath thesaurus therm according to user language
+    indivList = []
+    for row in indivListFromData :
+        row = dict(map(lambda k : getFullpath(k,userLang), row.items()))
+        indivList.append(row)
+
     def getnewObs(typeID):
         newObs = Observation()
         newObs.FK_ProtocoleType=typeID
@@ -141,12 +162,12 @@ def releasePost(request):
         return newObs
 
     protoTypes = pd.DataFrame(session.execute(select([ProtocoleType])).fetchall(), columns = ProtocoleType.__table__.columns.keys())
-    vertebrateGrpID = int(protoTypes.loc[protoTypes['Name'] == 'Vertebrate group','ID'].values[0])
-    vertebrateIndID = int(protoTypes.loc[protoTypes['Name'] == 'Vertebrate individual','ID'].values[0])
-    biometryID = int(protoTypes.loc[protoTypes['Name'] == 'Bird Biometry','ID'].values[0])
-    releaseGrpID = int(protoTypes.loc[protoTypes['Name'] == 'Release Group','ID'].values[0])
-    releaseIndID = int(protoTypes.loc[protoTypes['Name'] == 'Release Individual','ID'].values[0])
-    equipmentIndID = int(protoTypes.loc[protoTypes['Name'] == 'Individual equipment','ID'].values[0])
+    vertebrateGrpID = int(protoTypes.loc[protoTypes['Name'] == 'Vertebrate_group','ID'].values[0])
+    vertebrateIndID = int(protoTypes.loc[protoTypes['Name'] == 'Vertebrate_individual','ID'].values[0])
+    biometryID = int(protoTypes.loc[protoTypes['Name'] == 'Bird_Biometry','ID'].values[0])
+    releaseGrpID = int(protoTypes.loc[protoTypes['Name'] == 'Release_Group','ID'].values[0])
+    releaseIndID = int(protoTypes.loc[protoTypes['Name'] == 'Release_Individual','ID'].values[0])
+    equipmentIndID = int(protoTypes.loc[protoTypes['Name'] == 'Individual_equipment','ID'].values[0])
 
     vertebrateIndList = []
     biometryList = []
@@ -207,7 +228,7 @@ def releasePost(request):
                 indiv['taxon'] = curIndiv.Species
                 del indiv['Species']
                 pass
-            curIndiv.UpdateFromJson(indiv)
+            curIndiv.UpdateFromJson(indiv,startDate = curStation.StationDate)
 
             binList.append(MoF_AoJ(indiv))
             for k in indiv.keys():
@@ -223,19 +244,21 @@ def releasePost(request):
                 indiv['weight'] = indiv['Poids']
                 pass
             try: 
-                del indiv['Comments']
-            except: 
+                indiv['Comments'] = indiv['release_comments']
+            except:
+                print_exc()
                 pass
+
             curVertebrateInd = getnewObs(vertebrateIndID)
-            curVertebrateInd.UpdateFromJson(indiv)
+            curVertebrateInd.UpdateFromJson(indiv,startDate = curStation.StationDate)
             vertebrateIndList.append(curVertebrateInd)
 
             curBiometry = getnewObs(biometryID)
-            curBiometry.UpdateFromJson(indiv)
+            curBiometry.UpdateFromJson(indiv,startDate = curStation.StationDate)
             biometryList.append(curBiometry)
 
             curReleaseInd = getnewObs(releaseIndID)
-            curReleaseInd.UpdateFromJson(indiv)
+            curReleaseInd.UpdateFromJson(indiv,startDate = curStation.StationDate)
             releaseIndList.append(curReleaseInd)
 
             try:
@@ -248,11 +271,11 @@ def releasePost(request):
                 equipInfo = {
                 'FK_Individual': indiv['FK_Individual'],
                 'FK_Sensor' : sensor_id,
-                'Survey_type' : 'Post-Relâcher',
-                'Monitoring_Status' : 'Suivi',
-                'Sensor_Status': 'événement de sortie provisoire de stock>mise en service'
+                'Survey_type' : 'post-relâcher',
+                'Monitoring_Status' : 'suivi',
+                'Sensor_Status': 'sortie de stock>mise en service'
                 }
-                curEquipmentInd.UpdateFromJson(equipInfo)
+                curEquipmentInd.UpdateFromJson(equipInfo,startDate = curStation.StationDate)
                 curEquipmentInd.Station = curStation
                 equipmentIndList.append(curEquipmentInd)
             except Exception as e:
@@ -275,7 +298,7 @@ def releasePost(request):
 
         releaseGrp = Observation(FK_ProtocoleType=releaseGrpID, FK_Station =sta_id)
         releaseGrp.PropDynValuesOfNow={}
-        releaseGrp.UpdateFromJson({'taxon':taxon, 'release_method':releaseMethod})
+        releaseGrp.UpdateFromJson({'taxon':taxon, 'release_method':releaseMethod, 'nb_individuals':len(releaseIndList)})
         releaseGrp.Observation_children.extend(releaseIndList)
 
 
@@ -298,3 +321,22 @@ def releasePost(request):
         message = str(type(e))
 
     return message
+
+
+def isavailableSensor(request,data):
+    availability = checkSensor(data['FK_Sensor'],datetime.strptime(data['sta_date'],'%d/%m/%Y %H:%M:%S'))
+    if availability is True:
+        return 
+    else :
+        request.response.status_code = 510
+        return 'sensor not available'
+
+
+def getFullpath(item,lng):
+    name,val= item
+
+    try : 
+        newVal = invertedThesaurusDict[lng][val]
+    except:
+        newVal = val
+    return (name,newVal)

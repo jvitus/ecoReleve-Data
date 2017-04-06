@@ -2,15 +2,24 @@ from zope.sqlalchemy import ZopeTransactionExtension
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import scoped_session, sessionmaker
 import configparser
-from sqlalchemy import event
+from sqlalchemy import event, select,text
 from sqlalchemy.exc import TimeoutError
-
+from pyramid import threadlocal
+import pandas as pd
+import datetime
+from traceback import print_exc
 
 AppConfig = configparser.ConfigParser()
 AppConfig.read('././development.ini')
 print(AppConfig['app:main']['sensor_schema'])
 ### Create a database session : one for the whole application
 #DBSession = scoped_session(sessionmaker(extension=ZopeTransactionExtension()))
+
+pendingSensorData = []
+indivLocationData = []
+stationData = []
+graphDataDate = {'indivLocationData' : None,'pendingSensorData' : None}
+
 
 DBSession = None
 Base = declarative_base()
@@ -25,6 +34,7 @@ try:
     dbConfig['dbLog.schema'] = AppConfig['app:main']['dbLog.schema']
     dbConfig['dbLog.url'] =  AppConfig['app:main']['dbLog.url'] 
 except:
+    print_exc()
     pass
 
 DynPropNames = {
@@ -35,9 +45,51 @@ DynPropNames = {
     }
 }
 
+
+thesaurusDictTraduction = {}
+invertedThesaurusDict = {'en':{},'fr':{}}
+userOAuthDict = {}
+
+def loadThesaurusTrad(config):
+    session = config.registry.dbmaker()
+    thesTable = Base.metadata.tables['ERDThesaurusTerm']
+    query = select(thesTable.c)
+
+    results = session.execute(query).fetchall()
+
+    for row in results :
+        thesaurusDictTraduction[row['fullPath']] = {'en':row['nameEn']}
+        invertedThesaurusDict['en'][row['nameEn']] = row['fullPath']
+        invertedThesaurusDict['fr'][row['nameFr']] = row['fullPath']
+    session.close()
+
+def loadUserRole(config):
+    global userOAuthDict
+    session = config.registry.dbmaker()
+    VuserRole = Base.metadata.tables['VUser_Role']
+    query = select(VuserRole.c)
+
+    results = session.execute(query).fetchall()
+    userOAuthDict = pd.DataFrame.from_records(results
+            ,columns=['user_id','role_id'])
+
+USERS = {2:'superUser',
+    3:'user',
+    1:'admin'}
+
+GROUPS = {'superUser':['group:superUsers'],
+    'user':['group:users'],
+    'admin':['group:admins']}
+
+def groupfinder(userid, request):
+    currentUserRoleID = userOAuthDict.loc[userOAuthDict['user_id'] == int(userid),'role_id'].values[0]
+    if currentUserRoleID in USERS:
+        currentUserRole = USERS[currentUserRoleID]
+        return GROUPS.get(currentUserRole, [])
+
 def cache_callback(request,session):
-            if isinstance(request.exception,TimeoutError):
-                session.get_bind().dispose()
+    if isinstance(request.exception,TimeoutError):
+        session.get_bind().dispose()
 
 def db(request):
     makerDefault = request.registry.dbmaker

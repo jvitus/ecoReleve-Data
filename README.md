@@ -18,7 +18,7 @@ ecoReleve data is design to allow field data entry on any devices (IOS, Android 
 The data entry forms are fully customizable to allow users to design their own protocols.
 
 
-![ecoReleve](https://static.squarespace.com/static/519a7bc0e4b08ccdf8f31445/t/53c9549ae4b0a11d417c1d12/1405703324816/?format=1000w)
+![ecoReleve](https://static1.squarespace.com/static/519a7bc0e4b08ccdf8f31445/t/57addb672e69cf1f18bf7d3d/1471011777134/?format=1000w)
 
 ## Features
 
@@ -29,7 +29,7 @@ The data entry forms are fully customizable to allow users to design their own p
 ### Requirements
 
  - [Node.js](https://nodejs.org/) (for [npm](https://www.npmjs.com/))
- - [bower](http://bower.io/) `npm install -g bower`
+ - [bower](http://bower.io/) `npm install -g bower` (run it in an console with administrator privileges)
  - [python3.4](https://www.python.org/download/releases/3.4.0/) (for Windows you can install [miniconda3.4](http://conda.pydata.org/miniconda.html))
 
 
@@ -54,11 +54,18 @@ Install those packages with `pip` or `conda` :
 - [scikit-learn](http://scikit-learn.org/stable/)
 - [sqlalchemy](http://www.sqlalchemy.org/)
 - zope.interface
-- pandas=0.15.0
+- pandas=0.18.0
+- pywin32
+- pycrypto
 
 Run the setup install :
-- `python setup.py install`
+- `python setup.py install` or `python setup.py develop` (for development version)
+>>>>>>> a142b3fa06ae6cdf29bc2e3c25aea176e56c7b7d
 
+Also, you can run the [install.bat](https://github.com/NaturalSolutions/ecoReleve-Data/blob/master/Back/install.bat) file in the [Back folder](https://github.com/NaturalSolutions/ecoReleve-Data/tree/master/Back/)
+which will launch all commands in order to install this project (Front setup & Back setup).
+
+An error can occured if an other instance of pyramid WGSI run with the `pserve` command. Don't worry, it does not have any impact.
 
 ## Technolgies && Usage
 
@@ -66,6 +73,8 @@ Run the setup install :
 
 > npm
 > bower
+
+You have to configure the [config.js](https://github.com/NaturalSolutions/ecoReleve-Data/blob/master/Front/app/config.js.default) file
 
 * Grunt :
  `grunt build` build the code :
@@ -91,7 +100,7 @@ Run the setup install :
  >[SQLAlchemy](http://www.sqlalchemy.org/)
 
 
-You have to configure the [development.ini](https://github.com/NaturalSolutions/ecoReleve-Data-refact/tree/master/Back/development.ini.default) which can be found in the [Back folder](https://github.com/NaturalSolutions/ecoReleve-Data-refact/tree/master/Back/)
+You have to configure the [development.ini](https://github.com/NaturalSolutions/ecoReleve-Data/tree/master/Back/development.ini.default) which can be found in the [Back folder](https://github.com/NaturalSolutions/ecoReleve-Data/tree/master/Back/)
 Run `pserve development.ini` command in order to launch a Pyramid server.
 
 #### Database configuaration
@@ -111,7 +120,7 @@ Natural Solutions (NS) is based upon the collaborative development process of Gi
 If you want to contribute on this project, please create a new pull request :
 1. Fork the repository into your own GitHub repository in order to work on this one,
 2. Then create a new branch first,
-3. Finally, send a pull request to the [main repository](https://github.com/NaturalSolutions/ecoReleve-Data-refact/) when the task is ready for review.
+3. Finally, send a pull request to the [main repository](https://github.com/NaturalSolutions/ecoReleve-Data/) when the task is ready for review.
 4. When the pull request received at least one validation comment from an owner member of the repository, it will be merge to this one.
 
 Thank you!
@@ -119,7 +128,7 @@ Thank you!
 
 ## Demo
 
-http://92.222.217.165/nslocalportal
+http://demo.ecoreleve.com
 
 ## Commercial Support
 

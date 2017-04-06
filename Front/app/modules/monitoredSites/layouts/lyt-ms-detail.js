@@ -11,9 +11,10 @@ define([
   'ns_map/ns_map',
   'ns_form/NSFormsModuleGit',
   'ns_navbar/ns_navbar',
+  './lyt-camTrapValidateDetail'
 
 ], function($, _, Backbone, Marionette, Swal, Translater,
- config, NsGrid, NsMap, NsForm, Navbar
+ config, NsGrid, NsMap, NsForm, Navbar, camTrapVisualisation
 ) {
 
   'use strict';
@@ -32,11 +33,15 @@ define([
     ui: {
       'grid': '#grid',
       'gridEquipment': '#gridEquipment',
+      'stationsGrid': '#stationsGrid',
+      'camTrapGrid': '#camTrapGrid',
 
       'form': '#form',
       'map': '#map',
       'paginator': '#paginator',
       'paginatorEquipment': '#paginatorEquipment',
+      'paginatorStation': '#paginatorStation',
+      'paginatorCamTrap': '#paginatorCamTrap',
 
       'details': '#infos',
       'mapContainer': '#mapContainer',
@@ -45,7 +50,9 @@ define([
     },
 
     regions: {
-      'rgNavbar': '#navbar'
+      'rgMap' : '#map',
+      'rgNavbar': '#navbar',
+      'rgPhotos': '#gallerycamtrap'
     },
 
     rootUrl: '#monitoredSites/',
@@ -81,6 +88,8 @@ define([
       if(this.monitoredSiteId){
         this.displayForm(this.monitoredSiteId);
         this.displayGrid(this.monitoredSiteId);
+        this.displayStationGrid(this.monitoredSiteId);
+        this.displayCameraTrap(this.monitoredSiteId);
         setTimeout(function() {
           _this.displayMap();
         },0);
@@ -98,6 +107,8 @@ define([
       this.monitoredSiteId = this.model.get('ID');
       this.displayForm(this.monitoredSiteId);
       this.displayGrid(this.monitoredSiteId);
+      this.displayStationGrid(this.monitoredSiteId);
+      this.displayCameraTrap(this.monitoredSiteId);
     },
 
     displayGrid: function(id) {
@@ -116,12 +127,12 @@ define([
         name: 'StartDate',
         label: 'Start Date',
         editable: false,
-        cell: 'string'
+        cell: 'stringDate'
       },{
         name: 'EndDate',
         label: 'End Date',
         editable: false,
-        cell: 'string'
+        cell: 'stringDate'
       }, {
         name: 'Type',
         label: 'Type',
@@ -146,6 +157,173 @@ define([
       this.ui.paginator.html(this.grid.displayPaginator());
       this.ui.gridEquipment.html(this.gridEquip.displayGrid());
       this.ui.paginatorEquipment.html(this.gridEquip.displayPaginator());
+    },
+
+    displayCameraTrap: function() {
+      var _this = this;
+      var stationsCols = [{
+        name: 'UnicIdentifier',
+        label: 'ID',
+        editable: false,
+        cell: 'string'
+      },{
+        name: 'equipID',
+        label: 'equipid',
+        editable: false,
+        renderable: false,
+        cell: 'string',
+      },{
+        name: 'StartDate',
+        label: 'start date',
+        editable: false,
+        cell: 'string'
+      },{
+        name: 'EndDate',
+        label: 'end date',
+        editable: false,
+        cell: 'string'
+      },{
+        name: 'nbPhotos',
+        label: 'nb photos',
+        editable: false,
+        cell: 'string'
+      }];
+       console.log("YOUHOUUUUUUUUUUUU");
+       console.log(config.coreUrl);
+       console.log(this.monitoredSiteId);
+      this.camTrapGrid = new NsGrid({
+        pagingServerSide: false,
+        pageSize: 10,
+        columns: stationsCols,
+        url: config.coreUrl + 'photos/?siteid='+_this.monitoredSiteId+'',
+        rowClicked: true,
+
+      });
+      this.camTrapGrid.rowClicked = function(args) {
+        console.log("bim je clique");
+        console.log(args);
+      //  _this.rowClicked(args);
+      };
+      this.camTrapGrid.rowDbClicked = function(args) {
+        var that = this;
+        console.log("bim je double clique");
+        console.log(args);
+        var row = args.row
+        var idCamTrap = row.model.get('UnicIdentifier')
+        var startDate = row.model.get('StartDate')
+        var endDate = row.model.get('EndDate')
+        var equipId = row.model.get('equipID')
+        var date = ""
+        if( startDate !== 'N/A' ) {
+          date = startDate;
+        }
+        else if (endDate !== 'N/A'){
+          date = endDate;
+        }
+        _this.ui.map.hide();
+      //  _this.displayGallery(idCamTrap , equipId, date );
+        _this.rgPhotos.show( new camTrapVisualisation ({
+          id : _this.monitoredSiteId,
+          equipId : equipId,
+          date : date
+        }));
+      //  _this.rowDbClicked(args);
+      };
+
+      this.ui.camTrapGrid.html(this.camTrapGrid.displayGrid());
+      this.ui.paginatorCamTrap.html(this.camTrapGrid.displayPaginator());
+    },
+
+    displayGallery: function(id, equipId, date) {
+      var _this = this;
+      console.log("on veut la session");
+      console.log("id : " + id );
+      console.log("date :" + date);
+      console.log("equipid :" +equipId );
+      $.ajax({
+        type: "GET",
+        url: config.coreUrl  + 'photos/?siteid='+_this.monitoredSiteId+'&equipid='+equipId+'',
+      })
+      .done( function(response,status,jqXHR){
+        if( jqXHR.status === 200 ){
+          console.log("ok");
+          console.log(response);
+          _this.ui.map.html('');
+          for ( var tmp of response) {
+            console.log(tmp);
+            _this.ui.map.append('<img src="'+tmp.path+''+tmp.FileName+'" height="100" /><BR>')
+          }
+        }
+      })
+      .fail( function( jqXHR, textStatus, errorThrown ){
+        console.log("error");
+        console.log(errorThrown);
+      });
+
+
+    },
+
+    displayStationGrid: function() {
+      var _this = this;
+      var stationsCols = [{
+        name: 'ID',
+        label: 'ID',
+        editable: false,
+        renderable: false,
+        cell: 'string'
+      },{
+        name: 'Name',
+        label: 'Name',
+        editable: false,
+        cell: Backgrid.StringCell.extend({
+          render: function () {
+            this.$el.empty();
+            var rawValue = this.model.get(this.column.get("name"));
+            var formattedValue = this.formatter.fromRaw(rawValue, this.model);
+
+            this.$el.append('<a target="_blank"'
+              +'href= "http://'+window.location.hostname+window.location.pathname+'#stations/'+this.model.get('ID')+'">\
+                '+rawValue +'&nbsp;&nbsp;&nbsp;<span class="reneco reneco-info" ></span>\
+              </a>');
+
+            this.delegateEvents();
+            return this;
+          }
+        })
+      },{
+        name: 'StationDate',
+        label: 'date',
+        editable: false,
+        cell: 'stringDate'
+      },{
+        name: 'LAT',
+        label: 'latitude',
+        editable: false,
+        cell: 'string'
+      }, {
+        name: 'LON',
+        label: 'longitude',
+        editable: false,
+        cell: 'string'
+      },{
+        name: 'fieldActivity_Name',
+        label: 'FieldActivity',
+        editable: false,
+        cell : 'string'
+      }];
+
+      this.stationsGrid = new NsGrid({
+        pagingServerSide: false,
+        pageSize: 10,
+        columns: stationsCols,
+        url: config.coreUrl + 'monitoredSites/' + this.monitoredSiteId  + '/stations',
+        rowClicked: true,
+        com: this.com,
+      });
+
+
+      this.ui.stationsGrid.html(this.stationsGrid.displayGrid());
+      this.ui.paginatorStation.html(this.stationsGrid.displayPaginator());
     },
 
     displayMap: function(geoJson) {
@@ -183,15 +361,25 @@ define([
           method: 'DELETE',
           contentType: 'application/json'
         }).done(function(resp) {
-          Backbone.history.navigate(_this.rootUrl, {trigger : true});
+          Backbone.history.navigate('#monitoredSites/', {trigger : true});
         }).fail(function(resp) {
         });
       };
     },
 
     displayTab: function(e) {
+      var _this = this;
       e.preventDefault();
       var ele = $(e.target);
+      if( $(e.target).text() !== 'Camera Trap'  ) {
+        _this.rgPhotos.$el.hide();
+        _this.ui.map.show();
+      }
+      else {
+        _this.rgPhotos.$el.show();
+        _this.ui.map.hide();
+      }
+
       var tabLink = $(ele).attr('href');
       var tabUnLink = $('li.active.tab-ele a').attr('href');
       $('li.active.tab-ele').removeClass('active');

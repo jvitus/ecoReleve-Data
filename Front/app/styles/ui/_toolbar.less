@@ -9,6 +9,7 @@
   position: relative;
   box-shadow: 0px 1px 17px 0px rgba(107,107,107,0.5);
   &.bottom{
+    //z-index: 10;
     border-top: 1px solid #ddd;
   }
   &.top{
@@ -57,6 +58,22 @@
     height: ~"calc(100% - @{crop})";
   }
 }
+/*
+.crop3{
+  position: relative;
+  @crop: (@toolbarHeight*2)+@tabsHeight;
+  height: ~"calc(100% - @{crop})";
+  //padding: 0px 15px;
+  overflow-y: auto;
+  padding-bottom : 50px;
+&.overflowXH{
+  overflow-x: hidden;
+}
+&.crop-paginator{
+  @crop : @toolbarHeight*2 + @paginatorHeight;
+  height: ~"calc(100% - @{crop})";
+}
+} */
 
 .grid-crop{
   @crop : @paginatorHeight;
@@ -80,4 +97,3 @@
 .tooltipster-content ul li:active {
   background-color: rgb(200, 200, 200);
 }
-

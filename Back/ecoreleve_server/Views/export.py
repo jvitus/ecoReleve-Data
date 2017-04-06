@@ -8,11 +8,15 @@ from pyramid.security import NO_PERMISSION_REQUIRED
 from ..utils.generator import Generator
 from ..renderers import *
 from pyramid.response import Response
+import pandas as pd 
+import io
+from pyramid.response import Response ,FileResponse
+from datetime import datetime
 
 route_prefix = 'export/'
 
 # ------------------------------------------------------------------------------------------------------------------------- #
-@view_config(route_name=route_prefix+'themes', renderer='json' ,request_method='GET',permission = NO_PERMISSION_REQUIRED)
+@view_config(route_name=route_prefix+'themes', renderer='json' ,request_method='GET')
 def getListThemeEtude(request):
     session = request.dbsession
     th = BaseExport.metadata.tables['ThemeEtude']
@@ -22,7 +26,7 @@ def getListThemeEtude(request):
     return result
 
 # ------------------------------------------------------------------------------------------------------------------------- #
-@view_config(route_name=route_prefix+'themes/id/views', renderer='json' ,request_method='GET',permission = NO_PERMISSION_REQUIRED)
+@view_config(route_name=route_prefix+'themes/id/views', renderer='json' ,request_method='GET')
 def getListViews(request):
     session = request.dbsession
 
@@ -36,7 +40,7 @@ def getListViews(request):
 
     return result
 
-@view_config(route_name=route_prefix+'views/id/action', renderer='json' ,request_method='GET',permission = NO_PERMISSION_REQUIRED)
+@view_config(route_name=route_prefix+'views/id/action', renderer='json' ,request_method='GET')
 def actionList(request):
     dictActionFunc = {
     'getFields': getFields,
@@ -79,7 +83,7 @@ def count_(request):
     count = gene.count_(criteria)
     return count
 
-@view_config(route_name=route_prefix+'views/id', renderer='json' ,request_method='GET',permission = NO_PERMISSION_REQUIRED)
+@view_config(route_name=route_prefix+'views/id', renderer='json' ,request_method='GET')
 def search(request):
     session = request.dbsession
     viewId = request.matchdict['id']
@@ -105,13 +109,13 @@ def search(request):
 
 
 
-@view_config(route_name=route_prefix+'views/getFile', renderer='json' ,request_method='GET',permission = NO_PERMISSION_REQUIRED)
+@view_config(route_name=route_prefix+'views/getFile', renderer='json' ,request_method='GET')
 def views_filter_export(request):
     session = request.dbsession
     user = request.authenticated_userid['iss']
     
     try:
-        function_export= { 'csv': export_csv, 'pdf': export_pdf, 'gpx': export_gpx }
+        function_export= { 'csv': export_csv, 'pdf': export_pdf, 'gpx': export_gpx, 'excel':export_excel}
         criteria = json.loads(request.params.mixed()['criteria'])
         viewId = criteria['viewId']
         views = BaseExport.metadata.tables['Views']
@@ -128,23 +132,17 @@ def views_filter_export(request):
             for col in columns:
                 coll.append(table.c[col])
         else :
-            print('************* table')
-            print(table)
-            print('****************** date ****************')
-            #print(table.c[splittedColumnLower['creationDate']].label('Date'))
-            print('***************')
             splittedColumnLower = {c.name.lower().replace('_',''):c.name for c in table.c}
-            print(splittedColumnLower)
-            coll = [table.c[splittedColumnLower['lat']].label('LAT'),table.c[splittedColumnLower['lon']].label('LON'),table.c[splittedColumnLower['creationdate']].label('Date')]
-            
+            coll = [table.c[splittedColumnLower['lat']].label('LAT'),table.c[splittedColumnLower['lon']].label('LON')]
+
             if 'stationname' in splittedColumnLower:
                 coll.append(table.c[splittedColumnLower['stationname']].label('SiteName'))
             elif 'name' in splittedColumnLower:
                 coll.append(table.c[splittedColumnLower['name']].label('SiteName'))
             elif 'sitename' in splittedColumnLower:
                 coll.append(table.c[splittedColumnLower['sitename']].label('SiteName'))
-            #if 'date' in splittedColumnLower:
-                #coll.append(table.c[splittedColumnLower['date']].label('Date'))
+            if 'date' in splittedColumnLower:
+                coll.append(table.c[splittedColumnLower['date']].label('Date'))
 
 
         criteria['filters'].append({'Column':'creator','Operator':'=','Value':user})
@@ -157,22 +155,34 @@ def views_filter_export(request):
         value={'header': columns, 'rows': rows}
 
         io_export=function_export[fileType](value,request,viewName)
-        return Response(io_export)
+        return io_export
 
     except: raise
 
 def export_csv (value,request,name_vue) :
     csvRender=CSVRenderer()
     csv=csvRender(value,{'request':request})
-    return csv
+    return Response(csv)
 
 def export_pdf (value,request,name_vue):
     pdfRender=PDFrenderer()
     pdf=pdfRender(value,name_vue,request)
-    return pdf
+    return Response(pdf)
 
 def export_gpx (value,request,name_vue):
     gpxRender=GPXRenderer()
     gpx=gpxRender(value,request)
-    return gpx
+    return Response(gpx)
+
+def export_excel (value,request,name_vue):
+    df = pd.DataFrame(data = value['rows'], columns = value['header'])
+
+    fout = io.BytesIO()
+    writer = pd.ExcelWriter(fout)
+    df.to_excel(writer, sheet_name='Sheet1',index = False)
+    writer.save()
+    file = fout.getvalue()
+
+    dt = datetime.now().strftime('%d-%m-%Y')
+    return Response(file,content_disposition= "attachment; filename="+name_vue+"_"+dt+".xlsx",content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
 

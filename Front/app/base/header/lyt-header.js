@@ -1,6 +1,6 @@
 
-define(['marionette', 'config', './lyt-breadCrumb'],
-function(Marionette, config, Breadcrumb) {
+define(['jquery','marionette', 'config', './lyt-breadCrumb'],
+function($,Marionette, config, Breadcrumb) {
   'use strict';
   return Marionette.LayoutView.extend({
     template: 'app/base/header/tpl-header.html',
@@ -36,6 +36,16 @@ function(Marionette, config, Breadcrumb) {
       user.fetch({
         success: function(md) {
            _this.ui.userName.html(user.get('Firstname') + ' ' + user.get('Lastname') );
+
+/*      this.breadcrumb.show(new Breadcrumb());
+      window.app.user = new Backbone.Model();
+      window.app.user.url = config.coreUrl + 'currentUser';
+      window.app.user.fetch({
+        success: function(data) {
+          $('body').addClass(window.app.user.get('role'));
+          $.xhrPool.allowAbort = true;
+          _this.ui.userName.html(window.app.user.get('fullname'));
+//>>>>>>> a142b3fa06ae6cdf29bc2e3c25aea176e56c7b7d*/
         }
       });
     },
@@ -47,7 +57,7 @@ function(Marionette, config, Breadcrumb) {
       } else {
         this.controlformdisplay();
       }
-      
+
     },
     closeform : function(){
       $('div.supportpanel').animate({ "right": "-=560px" }, "slow" ).addClass('hidden');

@@ -46,7 +46,7 @@ class ObjectTypeWithDynProp:
         Fields = self.ObjContext.query(ModuleForms
             ).filter(ModuleForms.Module_ID == FrontModules.ID
             ).filter(or_(ModuleForms.TypeObj == self.ID, ModuleForms.TypeObj == None)
-            ).filter(ModuleForms.FormRender > 0).all()
+            ).filter(ModuleForms.FormRender > 0).filter(ModuleForms.InputType != 'GridRanged').all()
 
         for CurModuleForms in Fields :
             SchemaDTO[CurModuleForms.Name] = CurModuleForms.GetDTOFromConf(Editable)
@@ -92,12 +92,6 @@ class ObjectTypeWithDynProp:
         for curProp in Legends:
             curIndex = Unique_Legends.index(curProp[0])
             resultat[curIndex]['fields'].append(curProp[2])
-
-        # list_of_subschema = list(filter(lambda x : 'subschema' in Schema[x] ,Schema))
-        # if len(list_of_subschema) >0 :
-        #     for subName in list_of_subschema :
-        #         print(subName)
-        #         Schema[subName]['fieldsets'] = self.GetFieldSets(FrontModules,Schema[subName]['subschema'])
 
         return resultat
 

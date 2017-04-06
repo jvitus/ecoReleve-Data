@@ -22,7 +22,7 @@ define([
 
   return Marionette.LayoutView.extend({
     template: 'app/modules/sensors/templates/tpl-sensors-detail.html',
-    className: 'full-height animated white',
+    className: 'full-height animated white sensor',
     events: {
       'click #hideSensorDetails': 'hideDetail',
       'click #showSensorDetails': 'showDetail',
@@ -128,7 +128,7 @@ define([
           method: 'DELETE',
           contentType: 'application/json'
         }).done(function(resp) {
-          Backbone.history.navigate(_this.rootUrl, {trigger : true});
+          Backbone.history.navigate('#sensors/', {trigger : true});
         }).fail(function(resp) {
         });
       };
@@ -140,15 +140,45 @@ define([
         name: 'FK_Individual',
         label: 'Individual id',
         editable: false,
-        cell: 'string',
-        headerCell : null
+        headerCell : null,
+        cell: Backgrid.StringCell.extend({
+          render: function () {
+            this.$el.empty();
+            var rawValue = this.model.get(this.column.get("name"));
+            var formattedValue = this.formatter.fromRaw(rawValue, this.model);
+
+            if (this.model.get('FK_Individual')){ 
+              this.$el.append('<a target="_blank"' 
+                +'href= "http://'+window.location.hostname+window.location.pathname+'#individuals/'+this.model.get('FK_Individual')+'">\
+                  '+rawValue +'&nbsp;&nbsp;&nbsp;<span class="reneco reneco-info" ></span>\
+                </a>');
+              this.delegateEvents();
+            }
+            return this;
+          }
+        })
       },
         {
           name: 'Name',
           label: 'Monitored site',
           editable: false,
-          cell: 'string',
-          headerCell : null
+          headerCell : null,
+          cell: Backgrid.StringCell.extend({
+            render: function () {
+              this.$el.empty();
+              var rawValue = this.model.get(this.column.get("name"));
+              var formattedValue = this.formatter.fromRaw(rawValue, this.model);
+
+              if (this.model.get('Name')){
+                this.$el.append('<a target="_blank"' 
+                  +'href= "http://'+window.location.hostname+window.location.pathname+'#monitoredSites/'+this.model.get('MonitoredSiteID')+'">\
+                    '+rawValue +'&nbsp;&nbsp;&nbsp;<span class="reneco reneco-info" ></span>\
+                  </a>');
+                this.delegateEvents();
+             }
+              return this;
+            }
+        })
         },
         {
         name: 'StartDate',
