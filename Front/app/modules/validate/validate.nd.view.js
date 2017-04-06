@@ -55,13 +55,13 @@ define([
 
     onRowClicked: function(row) {
       var sortModel = row.api.getSortModel();
-      var opt=null;
+      var opt = '';
       if( sortModel.length ) {
         opt = '?' + sortModel[0].colId + '=' + sortModel[0].sort;
       }
 
       if( this.type_ != 'rfid' ) {
-        Backbone.history.navigate('validate/' + this.type_ + '/' + (parseInt(row.node.id) + 1)+''+opt, {trigger: true});
+        Backbone.history.navigate('validate/' + this.type_ + '/' + (parseInt(row.rowIndex)+1 )+''+opt, {trigger: true});
       }
       else {
         row.node.setSelected(!row.node.isSelected());
