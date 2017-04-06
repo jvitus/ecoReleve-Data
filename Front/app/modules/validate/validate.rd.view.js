@@ -43,18 +43,23 @@ define([
     },
 
     initialize: function(options) {
+      var sortParams = null;
+      sortParams = window.location.hash.split('?');
+      if (sortParams && sortParams.length) {
+        sortParams = '?'+ sortParams[1];
+      }
       this.model = new Backbone.Model();
       this.com = new Com();
       this.model.set('type', options.type);
       this.frequency = options.frequency;
       this.index = options.index - 1;
-      this.fetchGrid();
+      this.fetchGrid(sortParams);
     },
 
-    fetchGrid: function(){
+    fetchGrid: function(queryString){
       var _this = this;
       return this.deferred = $.ajax({
-        url: 'sensors/' + this.model.get('type') + '/uncheckedDatas',
+        url: 'sensors/' + this.model.get('type') + '/uncheckedDatas'+queryString,
         method: 'GET',
         context: this,
       }).done(function(data){
