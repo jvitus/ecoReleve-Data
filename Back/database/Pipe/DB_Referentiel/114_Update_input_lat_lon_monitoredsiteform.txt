@@ -1,0 +1,22 @@
+BEGIN TRAN T1;
+
+UPDATE [dbo].[ModuleForms]
+   SET
+      [InputType] = 'LatitudeEditor'
+ WHERE module_id = (select id from FrontModules where Name like 'MonitoredSiteForm') and Name Like '%LAT%'
+GO
+
+UPDATE [dbo].[ModuleForms]
+   SET
+      [InputType] = 'LongitudeEditor'
+ WHERE module_id = (select id from FrontModules where Name like 'MonitoredSiteForm') and Name Like '%LON%'
+GO
+
+INSERT INTO [dbo].[TVersion] (TVer_FileName,TVer_Date,TVer_DbName) VALUES ('114_Update_input_lat_lon_monitoredsiteform',GETDATE(),(SELECT db_name()))
+GO
+
+COMMIT TRAN T1;
+
+
+
+GO
