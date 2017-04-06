@@ -19,7 +19,7 @@ function(Backbone, Marionette, config) {
 
     initialize: function(options){
       this.parent = options.parent;
-      
+
       if(window.app.currentData && window.app.currentData.list.length > 1) {
         this.model = new Backbone.Model(window.app.currentData);
         this.model.set('display', true);
@@ -30,7 +30,7 @@ function(Backbone, Marionette, config) {
 
       if(options.index >= 0 && options.list.length > 1){
         this.model = new Backbone.Model();
-        this.model.set('display', true); 
+        this.model.set('display', true);
         this.model.set('index', parseInt(options.index));
         this.model.set('list', options.list);
         this.model.set('totalRecords', options.list.length);
@@ -45,7 +45,7 @@ function(Backbone, Marionette, config) {
     },
 
     onShow: function(){
-           
+
     },
 
     disableBtns: function(disable){
@@ -80,7 +80,7 @@ function(Backbone, Marionette, config) {
           _this.disableBtns(false);
         }
         Backbone.history.navigate(hash + '/' + id, {trigger: true});
-        
+
         if(window.onExitForm){
           window.onExitForm.done(function(){
             _this.model.set('index', index);
@@ -107,13 +107,14 @@ function(Backbone, Marionette, config) {
     },
     prevClientSide: function(){
       var index = this.model.get('index');
+      var totalRecords = this.model.get('totalRecords');
       index--;
       if(index < 0){
-        index = this.length - 1;
+        index = totalRecords - 1;
       }
       this.update(index);
     },
-    
+
     navigateNext: function(){
       if(this.clientSide){
         this.nextClientSide();
@@ -156,10 +157,10 @@ function(Backbone, Marionette, config) {
 
       index--;
       this.deferred = true;
-      
+
       if(index < 0){
         if((totalRecords / status.per_page) < 1){
-          index = totalRecords - 1;   
+          index = totalRecords - 1;
         } else {
           if(status.page == 1){
             status.page = (totalRecords / status.per_page);
