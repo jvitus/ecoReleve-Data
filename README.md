@@ -16,7 +16,7 @@ We provide Software for Field Worker: that actually run the data collection and 
 ecoReleve data is design to allow field data entry on any devices (IOS, Android and Window). It stores data local and let you upload it to the Core module when ready.
 
 The data entry forms are fully customizable to allow users to design their own protocols.
-	
+
 
 ![ecoReleve](https://static.squarespace.com/static/519a7bc0e4b08ccdf8f31445/t/53c9549ae4b0a11d417c1d12/1405703324816/?format=1000w)
 
@@ -56,7 +56,7 @@ Install those packages with `pip` or `conda` :
 - zope.interface
 - pandas=0.15.0
 
-Run the setup install : 
+Run the setup install :
 - `python setup.py install`
 
 
@@ -68,7 +68,7 @@ Run the setup install :
 > bower
 
 * Grunt :
- `grunt build` build the code : 
+ `grunt build` build the code :
   1. compile less files to app/styles/main.css (+ map file in dev mode)
   2. build html files with JST (app/build/templates.js)
   3. build js files : requirejs optimisation, minify and uglify (app/buil/prod.js)
