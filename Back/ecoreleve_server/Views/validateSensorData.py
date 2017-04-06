@@ -55,7 +55,7 @@ DataRfidasFile = Table('V_dataRFID_as_file', Base.metadata, autoload=True)
              permission=routes_permission['argos']['GET'])
 def type_unchecked_list(request):
     session = request.dbsession
-
+    print(request)
     type_ = request.matchdict['type']
     if type_ == 'argos':
         unchecked = ArgosDatasWithIndiv
@@ -84,6 +84,7 @@ def type_unchecked_list(request):
                                             ).order_by(unchecked.c['FK_ptt'].asc())
     data = session.execute(queryStmt).fetchall()
     dataResult = [dict(row) for row in data]
+    print(data)
     result = [{'total_entries': len(dataResult)}]
     result.append(dataResult)
     return result
