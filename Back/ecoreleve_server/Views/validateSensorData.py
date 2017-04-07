@@ -15,7 +15,6 @@ from ..controllers.security import routes_permission
 
 route_prefix = 'sensors/'
 
-
 def asInt(s):
     try:
         return int(s)
@@ -56,9 +55,8 @@ DataRfidasFile = Table('V_dataRFID_as_file', Base.metadata, autoload=True)
 def type_unchecked_list(request):
     session = request.dbsession
     paramsOrder = None
-    queryString = request.query_string.lower()
-    if( not (queryString.find('undefined') != -1 or queryString.find('objecttype') != -1 )):
-        paramsOrder = request.query_string.replace('=',' ')
+    if request.params and 'order_by' in request.params and 'order' in request.params:
+        paramsOrder = request.params['order_by']+' '+request.params['order']
 
     type_ = request.matchdict['type']
     if type_ == 'argos':

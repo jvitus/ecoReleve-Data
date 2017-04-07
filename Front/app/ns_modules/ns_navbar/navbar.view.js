@@ -71,6 +71,11 @@ function(Backbone, Marionette, config) {
 
       var id;
       var hash = window.location.hash.split('/').slice(0,-1).join('/');
+      var params ="";
+      if( typeof (this.parent.queryString) != 'undefined') {
+        params = this.parent.queryString;
+      }
+
 
       $.when(this.deferred).then(function(data){
         if(_this.clientSide){
@@ -79,7 +84,7 @@ function(Backbone, Marionette, config) {
           id = _this.model.get('list')[index]['ID'] || _this.model.get('list')[index];
           _this.disableBtns(false);
         }
-        Backbone.history.navigate(hash + '/' + id, {trigger: true});
+        Backbone.history.navigate(hash + '/' + id+params , {trigger: true});
 
         if(window.onExitForm){
           window.onExitForm.done(function(){

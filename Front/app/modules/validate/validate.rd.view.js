@@ -43,17 +43,17 @@ define([
     },
 
     initialize: function(options) {
-      var sortParams = null;
-      sortParams = window.location.hash.split('?');
-      if (sortParams && sortParams.length) {
-        sortParams = '?'+ sortParams[1];
+      this.queryString = '';
+      var urlParamsJson = this.parseURLParams(window.location.hash);
+      if( urlParamsJson ) {
+        this.queryString = this.constructParamsURL(urlParamsJson);
       }
       this.model = new Backbone.Model();
       this.com = new Com();
       this.model.set('type', options.type);
       this.frequency = options.frequency;
       this.index = options.index - 1;
-      this.fetchGrid(sortParams);
+      this.fetchGrid(this.queryString);
     },
 
     fetchGrid: function(queryString){
@@ -152,6 +152,34 @@ define([
         id: this.model.get('FK_Sensor'),
         reloadAfterSave: false,
       });
+    },
+
+    constructParamsURL: function(objJson) {
+      var order_by = null ;
+      var order = null;
+
+      if ( objJson && objJson.order_by ) {
+        order_by = 'order_by='+objJson.order_by
+        order = 'order=ASC'
+      }
+      if(objJson && objJson.order ) {
+        order = 'order='+objJson.order;
+      }
+      return '?'+order_by+'&'+order
+    },
+
+    parseURLParams: function(url) {
+      var parseURL = null;
+      var queryString = null;
+      var queryStringJson = null;
+      parseURL = url.split('?');
+      if (parseURL && parseURL.length > 1) {
+        queryString ='{\"'+ parseURL[1].replace(/&/g,'\",\"').replace(/=/g,'\":\"') +'\"}'
+        queryStringJson = JSON.parse(String(queryString));
+      }
+
+      return queryStringJson;
+
     },
 
     displayGrids: function(){

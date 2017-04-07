@@ -57,7 +57,7 @@ define([
       var sortModel = row.api.getSortModel();
       var opt = '';
       if( sortModel.length ) {
-        opt = '?' + sortModel[0].colId + '=' + sortModel[0].sort;
+        opt = '?order_by=' + sortModel[0].colId + '&order=' + sortModel[0].sort;
       }
 
       if( this.type_ != 'rfid' ) {
