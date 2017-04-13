@@ -569,7 +569,57 @@ define([
 
     initDataSource: function(){
       var _this = this;
-      this.dataSource = {
+      if( this.gridOptions.rowModelType === 'virtual') {
+
+        this.dataSource = {
+        rowCount: null,
+        maxConcurrentDatasourceRequests: 2,
+        getRows : function (params){
+
+          if( params.sortModel.length ) {
+            var status = {
+              order_by : params.sortModel[0].colId,
+              order : params.sortModel[0].sort
+            }
+          }
+
+          if(this.startDate){
+            status.startDate = this.startDate;
+          }
+          if(this.history){
+            status.history = this.history;
+          }
+
+          $.ajax({
+            url: _this.model.get('url'),
+            method: 'GET',
+            context: this,
+            data: status
+            }).done( function(response) {
+              var rowsThisPage = response[1];
+              var total = response[0].total_entries;
+
+              _this.model.set('totalRecords', total);
+              _this.model.set('status', status);
+
+              if(_this.afterGetRows){
+                _this.afterGetRows();
+              }
+
+              if(_this.firstRowFetch && _this.afterFirstRowFetch){
+                _this.afterFirstRowFetch();
+              }
+
+              _this.firstRowFetch = false;
+              params.successCallback(rowsThisPage , total);
+
+              _this.deferred.resolve();
+            });
+          }
+        };
+      }
+      else {
+        this.dataSource = {
         rowCount: null,
         maxConcurrentDatasourceRequests: 2,
         getRows : function (params){
@@ -627,6 +677,8 @@ define([
 
         }
       };
+
+      }
     },
 
     serialize: function() {
