@@ -82,10 +82,11 @@ define([
         columns: this.columnDefs,
         url: 'sensors/' + this.type_ + '/uncheckedDatas',
         afterFirstRowFetch: afterFirstRowFetch,
-        clientSide: true,
+      //  clientSide: true,
         gridOptions: {
           rowSelection: 'multiple',
           onRowClicked: this.onRowClicked.bind(this),
+          rowModelType : 'virtual'
         },
       }));
     },
