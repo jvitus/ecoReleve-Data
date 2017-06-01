@@ -3,21 +3,21 @@ define([
 	'ag-grid',
 	'backbone-forms',
 	'ns_modules/ns_bbfe/bbfe-objectPicker/bbfe-objectPicker',
-	'ns_modules/ns_bbfe/bbfe-autoCompTree',
+	'ns_modules/ns_bbfe/bbfe-autocompTree',
 	'ns_modules/ns_bbfe/bbfe-autocomplete',
 	'ns_modules/ns_bbfe/bbfe-dateTimePicker',
 	'ns_modules/ns_bbfe/bbfe-timePicker',
 	'ns_modules/ns_bbfe/bbfe-select',
 
 ], function($, AgGrid, Form,
-	ObjectPicker, 
-	ThesaurusPicker, 
-	AutocompletePicker, 
+	ObjectPicker,
+	ThesaurusPicker,
+	AutocompletePicker,
 	DateTimePicker,
 	TimePicker,
 	SelectPicker
 ){
-    
+
     var Editors = {};
 
 		var CustomEditor = function(){
@@ -29,7 +29,7 @@ define([
 			// 	params.api.addItems([{}]); //redraw every rows
 			// 	params.api.startEditingCell({ colKey: params.column.colDef.field, rowIndex: params.node.childIndex });
 			// }
-			
+
 		  var col = params.column.colDef;
 
 		  var value = params.value;
@@ -63,7 +63,7 @@ define([
 		};
 
 		CustomEditor.prototype.initBBFE = function(options){
-		  
+
 		};
 
 		CustomEditor.prototype.addDestroyableEventListener = function(eElement, event, listener){
@@ -76,7 +76,7 @@ define([
 		CustomEditor.prototype.getGui = function(){
 		  return this.element.el;
 		};
-		
+
 
 		CustomEditor.prototype.afterGuiAttached = function () {
 		  this.element.$el.focus();
@@ -166,7 +166,7 @@ define([
 		  return {
 		  	value: this.element.getValue(),
 		  	displayValue: this.element.$input[0].value //not sure why
-		  } 
+		  }
 		};
 
 

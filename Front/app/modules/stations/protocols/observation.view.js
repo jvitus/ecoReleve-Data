@@ -3,7 +3,7 @@ define([
   'underscore',
   'backbone',
   'marionette',
-  'ns_form/NSFormsModuleGit',
+  'ns_form/NsFormsModuleGit',
 
   'i18n'
 ], function($, _, Backbone, Marionette, NsForm) {
@@ -40,7 +40,7 @@ define([
       this.model.schema = this.model.get('schema');
       this.model.fieldsets = this.model.get('fieldsets');
       this.model.attributes = this.model.get('data');
-      
+
       this.form = new NsForm({
         modelurl: this.model.urlRoot,
         model: this.model,
@@ -68,14 +68,14 @@ define([
 
           var url;
           var hash = window.location.hash.split('?');
-          
+
           if(!_this.parentModel.get('obs').length){
             _this.parentModel.destroy();
             url = hash[0];
           } else {
             _this.parentModel.trigger('change:obs', _this.parentModel);
-            url = hash[0] + '?proto=' + _this.parentModel.get('ID') + '&obs=' + _this.parentModel.get('obs')[index];          
-          }          
+            url = hash[0] + '?proto=' + _this.parentModel.get('ID') + '&obs=' + _this.parentModel.get('obs')[index];
+          }
           Backbone.history.navigate(url, {trigger: true});
         }
       });
@@ -100,4 +100,3 @@ define([
     },
   });
 });
-

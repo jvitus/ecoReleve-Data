@@ -33,6 +33,8 @@ def current_user(request, user_id=None):
         userid = user_id
     else:
         userid = int(request.authenticated_userid['iss'])
+    print("*************************************************************************************")
+    print("LA SUPER ID DU USER ",userid)
     currentUserRole = groupfinder(userid, request)
 
     query = select([
@@ -42,6 +44,9 @@ def current_user(request, user_id=None):
         User.Language.label('Language'),
         User.Lastname.label('Lastname')
     ]).where(User.id == userid)
+    test = session.execute(query).fetchall()
+    print("HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH")
+    print(test)
     response = dict(session.execute(query).fetchone())
     response['role'] = currentUserRole
     return response

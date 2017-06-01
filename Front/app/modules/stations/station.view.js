@@ -6,7 +6,7 @@ define([
   'sweetAlert',
 
   'ns_modules/ns_com',
-  'ns_form/NSFormsModuleGit',
+  'ns_form/NsFormsModuleGit',
   'ns_navbar/navbar.view',
   './protocols/protocols.view',
 
@@ -26,7 +26,7 @@ define([
     className: 'full-height white station',
 
     ModelPrototype: StationModel,
-    
+
     events: {
       'click .tab-link': 'displayTab',
     },
@@ -171,7 +171,7 @@ define([
           _this.fieldActivityId = _this.model.get('fieldActivityId');
         }
       };
-      
+
       $.when(this.nsForm.jqxhr).then(function(){
         _this.fieldActivityId = this.model.get('fieldActivityId');
         _this.displayProtos();

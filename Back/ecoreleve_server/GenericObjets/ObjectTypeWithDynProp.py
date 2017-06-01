@@ -54,9 +54,9 @@ class ObjectTypeWithDynProp:
                 Editable)
 
     def GetDynPropNames(self):
-        curQuery = 'select D.Name from ' + self.GetDynPropContextTable() + ' C  JOIN ' + \
-            self.GetDynPropTable() + ' D ON C.' + self.Get_FKToDynPropTable() + '= D.ID '
-        curQuery += ' where C.' + self.GetFK_DynPropContextTable() + ' = ' + \
+        curQuery = 'select D."Name" from "' + self.GetDynPropContextTable() + '" C  JOIN "' + \
+            self.GetDynPropTable() + '" D ON C."' + self.Get_FKToDynPropTable() + '"= D."ID" '
+        curQuery += ' where C."' + self.GetFK_DynPropContextTable() + '" = ' + \
             str(self.ID)
         Values = self.session.execute(curQuery).fetchall()
         resultat = []

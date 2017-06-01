@@ -3,12 +3,12 @@ define([
   'underscore',
   'backbone',
   'marionette',
-  
+
   'sweetAlert',
   'translater',
 
   'ns_map/ns_map',
-  'ns_form/NSFormsModuleGit',
+  'ns_form/NsFormsModuleGit',
   'ns_navbar/navbar.view',
   'ns_grid/grid.view',
   'ns_modules/ns_com',
@@ -123,7 +123,7 @@ define([
     },
 
     displayGrids: function(){
-      
+
     },
 
     displayForm: function(){

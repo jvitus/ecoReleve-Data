@@ -10,7 +10,7 @@ define([
 
   'ns_modules/ns_com',
   'ns_map/ns_map',
-  'ns_form/NSFormsModuleGit',
+  'ns_form/NsFormsModuleGit',
   'ns_grid/grid.view',
   'ns_navbar/navbar.view',
 
@@ -46,7 +46,7 @@ define([
       this.model = new Backbone.Model();
       this.com = new Com();
       this.model.set('type', options.type);
-      this.frequency = options.frequency;      
+      this.frequency = options.frequency;
       this.index = options.index - 1;
       this.fetchGrid();
     },
@@ -185,7 +185,7 @@ define([
         com: this.com,
         url: 'sensors/' + this.model.get('type') + '/uncheckedDatas/' + this.model.get('FK_Individual') + '/' + this.model.get('FK_ptt'),
         afterFirstRowFetch: this.initFrequency.bind(this),
-        clientSide: true,        
+        clientSide: true,
         idName: 'PK_id',
         gridOptions: {
           rowSelection: 'multiple',
@@ -260,7 +260,7 @@ define([
       var selectedIds = selectedNodes.map(function(node){
         return node.data.PK_id;
       });
-      
+
       $.ajax({
         url: url,
         method: 'POST',

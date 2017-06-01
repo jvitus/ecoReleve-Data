@@ -6,7 +6,7 @@ import pandas as pd
 from traceback import print_exc
 
 AppConfig = configparser.ConfigParser()
-AppConfig.read('././development.ini')
+AppConfig.read('/var/www/ecoReleve-Data/Back/development.ini')
 print(AppConfig['app:main']['sensor_schema'])
 
 pendingSensorData = []
@@ -34,7 +34,13 @@ try:
 except:
     print_exc()
     pass
-
+DynPropNames = {
+    'ProtocoleType': {
+        'DynPropContextTable': 'ProtocoleType_ObservationDynProp',
+        'DynPropTable': 'ObservationDynProp',
+        'FKToDynPropTable': 'FK_ObservationDynProp'
+    }
+}
 
 thesaurusDictTraduction = {}
 invertedThesaurusDict = {'en': {}, 'fr': {}}
@@ -62,7 +68,7 @@ def loadThesaurusTrad(config):
 def loadUserRole(session):
     global userOAuthDict
     # session = config.registry.dbmaker()
-    VuserRole = Base.metadata.tables['VUser_Role']
+    VuserRole = Base.metadata.tables['vuser_role']
     query = select(VuserRole.c)
 
     results = session.execute(query).fetchall()
@@ -80,7 +86,7 @@ GROUPS = {'superUser': ['group:superUsers'],
 
 def groupfinder(userid, request):
     session = request.dbsession
-    Tuser_role = Base.metadata.tables['VUser_Role']
+    Tuser_role = Base.metadata.tables['vuser_role']
     query_check_role = select([Tuser_role.c['role']]).where(Tuser_role.c['userID'] == int(userid))
     currentUserRoleID = session.execute(query_check_role).scalar()
 
@@ -126,7 +132,7 @@ from .FieldActivity import *
 from .Individual import *
 from .Sensor import *
 from .MonitoredSite import *
-# from .Equipment import *
+from .Equipment import *
 # from .SensorData import *
 from .List import *
 from .Log import sendLog

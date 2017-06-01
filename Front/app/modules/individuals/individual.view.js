@@ -3,15 +3,15 @@ define([
   'underscore',
   'backbone',
   'marionette',
-  
+
   'sweetAlert',
   'translater',
-  
+
   './individual.model',
   'modules/objects/detail.view',
 
   'ns_map/ns_map',
-  'ns_form/NSFormsModuleGit',
+  'ns_form/NsFormsModuleGit',
   'ns_grid/grid.view',
 
 ], function(
