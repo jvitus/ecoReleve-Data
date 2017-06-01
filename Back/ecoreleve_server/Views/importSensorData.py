@@ -3,11 +3,12 @@
 # from .GSMimport import uploadFilesGSM
 # from .RFIDimport import uploadFileRFID
 # from ..controllers.security import routes_permission
-#
-#
+
+
+
 # route_prefix = 'sensors/'
-#
-#
+
+
 # @view_config(route_name=route_prefix + 'datas',
 #              renderer='json',
 #              request_method='POST',

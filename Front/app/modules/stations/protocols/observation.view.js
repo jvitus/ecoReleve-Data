@@ -14,7 +14,7 @@ define([
 
     ui: {
       'form': '.js-obs-form',
-      'formBtns': '.js-form-btns' 
+      'formBtns': '.js-form-btns'
     },
 
     initialize: function(options){
@@ -84,7 +84,19 @@ define([
     handleErrors: function(response){
       // individual equipment sensor is not available
       var btnColor = 'rgb(221, 107, 85)';
-      if(response.responseJSON.response.equipment_error){
+      if( response.status=== 409) {
+            var opts = {
+              title : 'Error',
+              text : 'You cannot do this modification because data have already been validated with this sensor. Please contact an administrator.',
+              allowEscapeKey: false,
+              showCancelButton: false,
+              type: 'error',
+              confirmButtonText: 'OK!',
+              confirmButtonColor: '#DD6B55'
+            };
+            this.swal(opts);
+      }
+      else if(response.responseJSON.response.equipment_error){
        this.swal({'title':'Data saving error', 'type':'error', 'text':'Selected sensor is not available', 'confirmButtonColor':'rgb(221, 107, 85)'});
       }
       else if(response.responseJSON.response.unequipment_error ){
