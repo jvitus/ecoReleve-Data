@@ -35,7 +35,13 @@ except:
     print_exc()
     pass
 
-
+DynPropNames = {
+    'ProtocoleType': {
+        'DynPropContextTable': 'ProtocoleType_ObservationDynProp',
+        'DynPropTable': 'ObservationDynProp',
+        'FKToDynPropTable': 'FK_ObservationDynProp'
+    }
+}
 thesaurusDictTraduction = {}
 invertedThesaurusDict = {'en': {}, 'fr': {}}
 userOAuthDict = {}

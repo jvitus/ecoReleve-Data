@@ -4,7 +4,7 @@ from ..Models import (
     ProtocoleType,
     FieldActivity_ProtocoleType,
     fieldActivity,
-    ErrorAvailable,
+    # ErrorAvailable,
     sendLog
 )
 from sqlalchemy import select, and_, join
