@@ -140,16 +140,16 @@ class ObjectWithDynProp(ConfiguredDbObjectMapped, DbObject):
         return res
 
     def LoadNowValues(self):
-        curQuery = 'select V.*, P.Name,P.TypeProp from ' + self.GetDynPropValuesTable() + \
-            ' V JOIN ' + self.GetDynPropTable() + \
-            ' P ON P.' + self.GetDynPropValuesTableID() + '= V.' + \
-            self.GetDynPropFKName() + ' where '
-        curQuery += 'not exists (select * from ' + \
-            self.GetDynPropValuesTable() + ' V2 '
-        curQuery += 'where V2.' + self.GetDynPropFKName() + ' = V.' +  self.GetDynPropFKName() + ' and V2.' + \
-            self.GetSelfFKNameInValueTable() + ' = V.' + self.GetSelfFKNameInValueTable() + ' '
-        curQuery += 'AND V2.startdate > V.startdate)'
-        curQuery += 'and v.' + self.GetSelfFKNameInValueTable() + ' =  ' + \
+        curQuery = 'select V.*, P."Name",P."TypeProp" from "' + self.GetDynPropValuesTable() + \
+            '" V JOIN "' + self.GetDynPropTable() + \
+            '" P ON P."' + self.GetDynPropValuesTableID() + '"= V."' + \
+            self.GetDynPropFKName() + '" where '
+        curQuery += 'not exists (select * from "' + \
+            self.GetDynPropValuesTable() + '" V2 '
+        curQuery += 'where V2."' + self.GetDynPropFKName() + '" = V."' +  self.GetDynPropFKName() + '" and V2."' + \
+            self.GetSelfFKNameInValueTable() + '" = V."' + self.GetSelfFKNameInValueTable() + '" '
+        curQuery += ' AND V2."StartDate" > V."StartDate")'
+        curQuery += 'and v."' + self.GetSelfFKNameInValueTable() + '" =  ' + \
             str(self.GetpkValue())
 
         Values = self.session.execute(curQuery).fetchall()
@@ -161,14 +161,12 @@ class ObjectWithDynProp(ConfiguredDbObjectMapped, DbObject):
         return row[analogType[row['TypeProp']]]
 
     def getForm(self, displayMode='edit', type_=None, moduleName=None):
-        from ..utils.parseValue import formatValue
         ObjType = self.GetType()
         form = ConfiguredDbObjectMapped.getForm(self, displayMode, ObjType.ID, moduleName)
         if (ObjType.Status == 10):
             form['grid'] = True
         form['data'] = {'id': 0}
-        data = formatValue(form['schema']['defaultValues'], form['schema'])
-        form['data'].update(data)
+        form['data'].update(form['schema']['defaultValues'])
         form['data'][self.getTypeObjectFKName()] = ObjType.ID
         return form
 
@@ -195,16 +193,18 @@ class ObjectWithDynProp(ConfiguredDbObjectMapped, DbObject):
         return resultat
 
     def getLinkedField(self):
-        curQuery = 'select D.ID, D.Name , D.TypeProp , C.LinkedTable , C.LinkedField, C.LinkedID, C.LinkSourceID from ' + \
-            self.GetType().GetDynPropContextTable()
-        curQuery += ' C  JOIN ' + self.GetType().GetDynPropTable() + ' D ON C.' + \
-            self.GetType().Get_FKToDynPropTable() + '= D.ID '
-        curQuery += ' where C.' + self.GetType().GetFK_DynPropContextTable() + \
-            ' = ' + str(self.GetType().ID)
-        curQuery += ' AND C.LinkedTable is not null'
-        Values = self.session.execute(curQuery).fetchall()
+        # curQuery = select([])
+        #
+        # 'select D.ID, D.Name , D.TypeProp , C.LinkedTable , C.LinkedField, C.LinkedID, C.LinkSourceID from ' + \
+        #     self.GetType().GetDynPropContextTable()
+        # curQuery += ' C  JOIN ' + self.GetType().GetDynPropTable() + ' D ON C.' + \
+        #     self.GetType().Get_FKToDynPropTable() + '= D.ID '
+        # curQuery += ' where C.' + self.GetType().GetFK_DynPropContextTable() + \
+        #     ' = ' + str(self.GetType().ID)
+        # curQuery += ' AND C.LinkedTable is not null'
+        # Values = self.session.execute(curQuery).fetchall()
 
-        return [dict(row) for row in Values]
+        return []
 
     def linkedFieldDate(self):
         return datetime.now()
@@ -260,4 +260,3 @@ class ObjectWithDynProp(ConfiguredDbObjectMapped, DbObject):
                 session.close()
             except:
                 pass
-

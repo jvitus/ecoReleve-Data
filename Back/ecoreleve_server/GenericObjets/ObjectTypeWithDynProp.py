@@ -65,10 +65,10 @@ class ObjectTypeWithDynProp:
         return resultat
 
     def GetDynProps(self):
-        curQuery = 'select D.ID, D.Name , D.TypeProp from ' + self.GetDynPropContextTable() + \
-            ' C  JOIN ' + self.GetDynPropTable() + ' D ON C.' + \
-            self.Get_FKToDynPropTable() + '= D.ID '
-        curQuery += ' where C.' + self.GetFK_DynPropContextTable() + ' = ' + \
+        curQuery = 'select D."ID", D."Name" , D."TypeProp" from "' + self.GetDynPropContextTable() + \
+            '" C  JOIN "' + self.GetDynPropTable() + '" D ON C."' + \
+            self.Get_FKToDynPropTable() + '"= D."ID" '
+        curQuery += ' where C."' + self.GetFK_DynPropContextTable() + '" = ' + \
             str(self.ID)
         Values = self.session.execute(curQuery).fetchall()
         return Values
