@@ -165,11 +165,15 @@ class StationsView(DynamicObjectCollectionView):
         list_ = {}
         for x, y in FieldWorkers:
             list_.setdefault(x, []).append(y)
-        for row in data[1]:
-            try:
-                row['FK_FieldWorker_FieldWorkers'] = list_[row['ID']]
-            except:
-                pass
+
+        try:
+            for row in data[1]:
+                try:
+                    row['FK_FieldWorker_FieldWorkers'] = list_[row['ID']]
+                except:
+                    pass
+        except:
+            pass
         return data
 
     def getGeoJsonParams(self, params):
