@@ -107,14 +107,14 @@ define([
 	            return false;
 	            break;
 	        }
-					Backbone.history.navigate('/importFile/'+type,{trigger:false, replace: false});
+					Backbone.history.navigate('/importFile/'+type,{trigger:true, replace: false});
 	      }
     },
 
     beforePrev: function(index) {
       if ((index - 1) == 0) {
         this.removeSteps(1);
-				Backbone.history.navigate('/importFile',{trigger:false, replace: false});
+				Backbone.history.navigate('/importFile',{trigger:true, replace: false});
       }
     },
 

@@ -6,15 +6,15 @@ define(['jquery', 'marionette', 'backbone', 'config', 'sweetAlert'],
   return Marionette.AppRouter.extend({
     history: [],
     appRoutes: {
-      'export(/)': 'export',
+      // 'export(/)': 'export',
 
-      'importFile/:type(/)': 'importFile',
+      //'importFile/:type(/)': 'importFile',
       'importFile(/)' : 'importFile',
 
-      'individuals/new(/)': 'newIndividual',
-      'individuals/:id(/)': 'individual',
-      'individuals(/)': 'individuals',
-      'individuals/new/:type(/)': 'newIndividual',
+      // 'individuals/new(/)': 'newIndividual',
+      // 'individuals/:id(/)': 'individual',
+      // 'individuals(/)': 'individuals',
+      // 'individuals/new/:type(/)': 'newIndividual',
 
 
       'monitoredSites/new(/)': 'newMonitoredSite',
@@ -23,9 +23,9 @@ define(['jquery', 'marionette', 'backbone', 'config', 'sweetAlert'],
       'monitoredSites/new/:type(/)': 'newMonitoredSite',
 
 
-      'sensors/new/:type(/)': 'newSensor',
-      'sensors/:id(/)': 'sensor',
-      'sensors(/)': 'sensors',
+      // 'sensors/new/:type(/)': 'newSensor',
+      // 'sensors/:id(/)': 'sensor',
+      // 'sensors(/)': 'sensors',
 
       'stations/new/:from(/)': 'newStation',
       'stations/new(/)': 'newStation',
@@ -37,12 +37,12 @@ define(['jquery', 'marionette', 'backbone', 'config', 'sweetAlert'],
       'stations(/)': 'stations',
 
       //'stations/:id/release(/)': 'stationRelease',
-      'release/:id(/)': 'releaseIndividuals',
-      'release(/)': 'release',
+      // 'release/:id(/)': 'releaseIndividuals',
+      // 'release(/)': 'release',
 
-      'validate(/)': 'validate',
-      'validate/:type(/)': 'validateType',
-      'validate/:type/:dataset(/)': 'validateDetail',
+      // 'validate(/)': 'validate',
+      // 'validate/:type(/)': 'validateType',
+      // 'validate/:type/:dataset(/)': 'validateDetail',
 
       '*route(/:page)': 'home',
     },
@@ -51,14 +51,14 @@ define(['jquery', 'marionette', 'backbone', 'config', 'sweetAlert'],
       this.collection = new Backbone.Collection([
       {label: 'Manual import', href: 'importFile', icon: 'reneco-import'},
       {label: 'New', href: 'stations/new', icon: 'reneco-entrykey'},
-      {label: 'Release', href: 'release', icon: 'reneco-to_release'},
-      {label: 'Validate', href: 'validate', icon: 'reneco-validate'},
+      // {label: 'Release', href: 'release', icon: 'reneco-to_release'},
+      // {label: 'Validate', href: 'validate', icon: 'reneco-validate'},
       {label: 'Stations', href: 'stations', icon: 'reneco-stations'},
       {label: 'Observations', href: 'observations', icon: 'reneco-stations'},
-      {label: 'Individuals', href: 'individuals', icon: 'reneco-individuals'},
-      {label: 'Sensors', href: 'sensors', icon: 'reneco-sensors'},
+      // {label: 'Individuals', href: 'individuals', icon: 'reneco-individuals'},
+      // {label: 'Sensors', href: 'sensors', icon: 'reneco-sensors'},
       {label: 'Monitored Sites', href: 'monitoredSites', icon: 'reneco-sensors'},
-      {label: 'Export', href: 'export', icon: 'reneco-export'},
+      // {label: 'Export', href: 'export', icon: 'reneco-export'},
       ]);
     },
 

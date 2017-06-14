@@ -233,7 +233,7 @@ define([
 		},
 
 		enableNextBtn: function(){
-			this.ui.btnNext.removeAttr('disabled');
+			//this.ui.btnNext.removeAttr('disabled');
 		},
 		disableNextBtn: function(){
 			this.ui.btnNext.attr('disabled', 'disabled');

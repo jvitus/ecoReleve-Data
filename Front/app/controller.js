@@ -4,26 +4,26 @@ define([
   './base/home/lyt-home',
 
   './modules/importFile/lyt-entry-importFile',
-  './modules/export/lyt-export-stepper',
+  // './modules/export/lyt-export-stepper',
 
-  './modules/validate/validate.st.view',
-  './modules/validate/validate.nd.view',
-  './modules/validate/validate.rd.view',
+  // './modules/validate/validate.st.view',
+  // './modules/validate/validate.nd.view',
+  // './modules/validate/validate.rd.view',
 
-  './modules/release/release.view',
-  './modules/release/release.individual.view',
+  // './modules/release/release.view',
+  // './modules/release/release.individual.view',
 
   './modules/stations/station.view',
   './modules/stations/stations.view',
   './modules/stations/stations.new.view',
+  //
+  // './modules/individuals/individual.view',
+  // './modules/individuals/individuals.view',
+  // './modules/individuals/individuals.new.view',
 
-  './modules/individuals/individual.view',
-  './modules/individuals/individuals.view',
-  './modules/individuals/individuals.new.view',
-
-  './modules/sensors/sensor.view',
-  './modules/sensors/sensors.view',
-  './modules/sensors/sensors.new.view',
+  // './modules/sensors/sensor.view',
+  // './modules/sensors/sensors.view',
+  // './modules/sensors/sensors.new.view',
 
   './modules/monitoredSites/monitored_site.view',
   './modules/monitoredSites/monitored_sites.view',
@@ -33,16 +33,16 @@ define([
   Marionette,
   LytHome,
   LytImportFile,
-  LytExport,
-  LytSensorValidate,
-  LytSensorValidateType,
-  LytSensorValidateDetail,
-  LytRelease,
-  LytStationsRelease,
+  // LytExport,
+  // LytSensorValidate,
+  // LytSensorValidateType,
+  // LytSensorValidateDetail,
+  // LytRelease,
+  // LytStationsRelease,
 
   LytStation, LytStations, LytStationsNew,
-  LytIndividual, LytIndividuals, LytIndividualsNew,
-  LytSensor, LytSensors, LytSensorsNew,
+  // LytIndividual, LytIndividuals, LytIndividualsNew,
+  // LytSensor, LytSensors, LytSensorsNew,
   LytMonitoredSite, LytMonitoredSites, LytMonitoredSitesNew
 ) {
   'use strict';
@@ -62,16 +62,16 @@ define([
           'entities': LytStations,
           'newEntity': LytStationsNew
         },
-        'individuals': {
-          'entity': LytIndividual,
-          'entities': LytIndividuals,
-          'newEntity': LytIndividualsNew
-        },
-        'sensors': {
-          'entity': LytSensor,
-          'entities': LytSensors,
-          'newEntity': LytSensorsNew
-        },
+        // 'individuals': {
+        //   'entity': LytIndividual,
+        //   'entities': LytIndividuals,
+        //   'newEntity': LytIndividualsNew
+        // },
+        // 'sensors': {
+        //   'entity': LytSensor,
+        //   'entities': LytSensors,
+        //   'newEntity': LytSensorsNew
+        // },
         'monitoredSites': {
           'entity': LytMonitoredSite,
           'entities': LytMonitoredSites,
@@ -166,11 +166,11 @@ define([
         }));
       }
     },
-    
+
     sensors: function() {
       this.rgMain.show(new LytSensors());
     },
-    
+
     newSensor: function(objectType) {
       this.rgMain.show(new LytSensorsNew({objectType: objectType}));
     },
@@ -178,7 +178,7 @@ define([
     validate: function() {
       this.rgMain.show(new LytSensorValidate());
     },
-    
+
     validateType: function(type) {
       this.rgMain.show(new LytSensorValidateType({
         type: type
