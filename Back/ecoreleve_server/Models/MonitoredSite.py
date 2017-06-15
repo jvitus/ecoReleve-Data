@@ -19,6 +19,7 @@ from ..GenericObjets.ObjectTypeWithDynProp import ObjectTypeWithDynProp
 from datetime import datetime
 from ..utils.parseValue import isEqual
 from ..utils.datetime import parse
+from pyramid import threadlocal
 
 
 class MonitoredSitePosition(Base):
@@ -43,9 +44,9 @@ class MonitoredSite (Base, ObjectWithDynProp):
 
     ID = Column(Integer, Sequence('MonitoredSite__id_seq'), primary_key=True)
     Name = Column(String(250), nullable=False)
-    Category = Column(String(250), nullable=False)
+    Category = Column(String(250), nullable=False,default='Standard')
     Creator = Column(Integer, nullable=False)
-    Active = Column(Boolean, nullable=False, default=1)
+    Active = Column(Boolean, nullable=False, default=True)
     creationDate = Column(DateTime, nullable=False, default=func.now())
 
     FK_MonitoredSiteType = Column(Integer, ForeignKey('MonitoredSiteType.ID'))
@@ -64,6 +65,8 @@ class MonitoredSite (Base, ObjectWithDynProp):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         ObjectWithDynProp.__init__(self)
+        if not self.Creator:
+            self.Creator = threadlocal.get_current_request().authenticated_userid['iss']
 
     # @orm.reconstructor
     # def init_on_load(self):
