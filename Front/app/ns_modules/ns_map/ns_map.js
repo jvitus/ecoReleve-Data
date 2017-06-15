@@ -30,7 +30,7 @@ define([
 ], function(config, $, _, Backbone , Marionette, L, cluster, GoogleMapsLoader
     ) {
 
-  'use strict';  
+  'use strict';
   // I am the internal, static counter for the number of Coms
   // that have been created in the system. This is used to
   // power the unique identifier of each instance.
@@ -234,7 +234,7 @@ define([
       }
 
       this.markersLayer = new CustomMarkerClusterGroup({
-        disableClusteringAtZoom: disableClusteringAtZoom, 
+        disableClusteringAtZoom: disableClusteringAtZoom,
         maxClusterRadius: 70,
         polygonOptions: {color: "rgb(51, 153, 204)", weight: 2},
       });
@@ -325,7 +325,7 @@ define([
           if (_this.cluster){
             _this.initClusters(geoJson);
             _this.geoJson = geoJson;
-            
+
             _this.ready();
             /*setTimeout(function(){
               _this.addMarkersLayer();
@@ -345,7 +345,7 @@ define([
 
     setCenter: function(geoJson){
       if(!geoJson || (geoJson.features.length == 0) ){
-        this.center = new L.LatLng(30,0);
+        this.center = new L.LatLng(43.36,5.37);
       }else{
         this.center = new L.LatLng(
           geoJson.features[0].geometry.coordinates[0],
@@ -435,14 +435,14 @@ define([
           marker.feature = feature;
 
           _this.dict[feature.id] = marker;
-          
+
           marker.on('click', function(e){
             if(_this.selection && this.feature.properties.type_ !== 'station'){
               _this.interaction('singleSelection', this.feature.id);
             }
             _this.interaction('focus', this.feature.id);
           });
-            
+
           markerList.push(marker);
         }else{
           console.warn('latlng null');
@@ -522,7 +522,7 @@ define([
     },
     /** from parent to child */
     updateAllClusters: function(c, all){
-      
+
 
       this.updateClusterStyle(c, all);
       var childs = c.getAllChildMarkers();
@@ -608,7 +608,7 @@ define([
             }
           }
         }
-        
+
         _this.interaction('multiSelection', bbox);
         $(_this).trigger('ns_bbox_end', e.boxZoomBounds);
       });
@@ -710,7 +710,7 @@ define([
           //$(m._icon).addClass('selected');
           className += ' selected';
       }
-      
+
       switch(m.feature.properties.type_) {
         case 'station':
           className += ' marker-station';
@@ -776,7 +776,7 @@ define([
     selectAll: function(){
       var firstProp;
       var layers = this.markersLayer._featureGroup._layers;
-      
+
       //get the first layer (marker cluster)
       for(var key in layers) {
           if(layers.hasOwnProperty(key)) {
@@ -791,7 +791,7 @@ define([
       }
 
       this.topParent = firstProp;
-      
+
       this.updateAllClusters(firstProp, true);
     },
 
@@ -847,7 +847,7 @@ define([
     updateFromServ: function(param){
       var _this = this;
       this.searchCriteria = param;
-      
+
       var data = {
         'criteria': JSON.stringify(this.searchCriteria),
       };
