@@ -16,13 +16,13 @@ define([
   'ns_modules/ns_bbfe/bbfe-listOfNestedModel/bbfe-listOfNestedModel',
   'ns_modules/ns_bbfe/bbfe-gridForm',
   'ns_modules/ns_bbfe/bbfe-autocompTree',
-  'ns_modules/ns_bbfe/bbfe-fileUpload',
   'ns_modules/ns_bbfe/bbfe-select',
   'ns_modules/ns_bbfe/bbfe-gridForm',
   'ns_modules/ns_bbfe/bbfe-ajaxButton',
   'ns_modules/ns_bbfe/bbfe-lon',
   'ns_modules/ns_bbfe/bbfe-lat',
   'ns_modules/ns_bbfe/bbfe-objectPicker/bbfe-objectPicker',
+  'ns_modules/ns_bbfe/bbfe-FilePicker/bbfe-FilePicker'
 
   ],
 
