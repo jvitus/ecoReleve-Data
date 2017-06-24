@@ -426,10 +426,32 @@ define([
 
           if(_this.popup){
             prop = feature.properties;
+            var topB = document.createElement("b");
             for(var p in prop){
-              infos +='<b>'+p+' : '+prop[p]+'</b><br />';
+              if (p !='photos') {
+               var newB = document.createElement("b");
+               newB.innerHTML = '<b>'+p+' : '+prop[p]+'</b><br />'
+               topB.appendChild(newB)
+              //infos +='<b>'+p+' : '+prop[p]+'</b><br />';
+              }
             }
-            marker.bindPopup(infos);
+            for (var p in prop) {
+                if (p =='photos') {
+                  console.log(prop[p])
+                  var img = document.createElement("img");
+                  img.src = prop[p];
+                  img.width = 150;
+                  img.height = 150;
+                  img.onclick =  function (event) {
+                            $(".img-responsive").attr("src",  img.src);
+                            $('#myModal').modal('show');
+                        };             
+                //var imgV = img.innerHTML
+                topB.appendChild(img)
+                //infos+= imgV;
+              }
+            }
+            marker.bindPopup(topB);
           }
 
           marker.feature = feature;
