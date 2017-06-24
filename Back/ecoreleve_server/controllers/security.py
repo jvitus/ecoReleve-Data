@@ -210,6 +210,12 @@ routes_permission = {
         'PUT': 'admin',
         'DELETE': 'admin'
     },
+    'photos': {
+        'GET': 'admin',
+        'POST': 'admin',
+        'PUT': 'admin',
+        'DELETE': 'admin'
+    },
     'export': {
         'GET': 'all',
         'POST': 'all',
