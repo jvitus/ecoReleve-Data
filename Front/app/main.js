@@ -64,6 +64,7 @@ require.config({
 
     'autocompTree': './vendors/jquery.autocompTree',
     'tooltipster-list': 'vendors/tooltipList',
+    'exif-js' : '../bower_components/exif-js/exif'
 
   },
   map: {
