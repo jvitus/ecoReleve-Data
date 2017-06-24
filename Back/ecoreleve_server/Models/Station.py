@@ -47,6 +47,7 @@ class Station(Base, ObjectWithDynProp):
         'StationDynPropValue', backref='Station', cascade="all, delete-orphan")
     FK_StationType = Column(Integer, ForeignKey('StationType.ID'))
     Comments = Column(String(250))
+    Photos = Column(String(500))
 
     FK_Region = Column(Integer, ForeignKey('Region.ID'), nullable=True)
     FK_MonitoredSite = Column(Integer, ForeignKey(
