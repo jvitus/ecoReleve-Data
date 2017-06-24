@@ -5,7 +5,8 @@ from ..Models import (
     StationList,
     MonitoredSitePosition,
     fieldActivity,
-    User
+    User,
+    dbConfig
 )
 import json
 import itertools
@@ -193,11 +194,17 @@ class StationsView(DynamicObjectCollectionView):
             exceed = False
 
             for row in result:
+                if row['Photos'] is not None:
+                    pathPhoto = 'photos\\'+str(row['Photos'])
+                else :
+                    pathPhoto = 'photos\\'+str("noPhotos.jpg")
                 geoJson.append({
                     'type': 'Feature',
                     'properties': {
                         'name': row['Name'],
-                        'date': row['StationDate']},
+                        'date': row['StationDate'],
+                        'photos': pathPhoto
+                        },
                     'geometry': {
                         'type': 'Point',
                         'coordinates': [row['LAT'], row['LON']]}
