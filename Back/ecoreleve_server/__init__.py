@@ -20,6 +20,8 @@ from .Models import (
 from .Views import add_routes, add_cors_headers_response_callback
 from pyramid.events import NewRequest
 from sqlalchemy.orm import sessionmaker, scoped_session
+import os,sys
+import errno
 
 
 def datetime_adapter(obj, request):
@@ -81,6 +83,26 @@ def main(global_config, **settings):
     dbConfig['wsThesaurus']['wsUrl'] = settings['wsThesaurus.wsUrl']
     dbConfig['wsThesaurus']['lng'] = settings['wsThesaurus.lng']
     dbConfig['data_schema'] = settings['data_schema']
+
+    dbConfig['photos'] = {}
+    dbConfig['photos']['path'] = settings['photos.path']
+
+    if(os.path.exists(dbConfig['photos']['path']) ):
+        try :
+            os.access( dbConfig['photos']['path'], os.W_OK)
+            print("folder : %s exist" %(dbConfig['photos']['path']))
+        except :
+            print("app cant write in this directory ask your admin %s" %(dbConfig['photos']['path']) )
+            raise
+            #declenché erreur
+    else:
+        print ("folder %s doesn't exist we gonna try to create it" %(dbConfig['photos']['path']))
+        try:
+            os.makedirs(dbConfig['photos']['path'])
+            print("folder created : %s" %(dbConfig['photos']['path']))
+        except OSError as exception:
+            if exception.errno != errno.EEXIST:
+                raise
 
     Base.metadata.bind = engine
     Base.metadata.create_all(engine)
