@@ -21,7 +21,7 @@ define(['jquery','marionette','config','i18n'], function($, Marionette, config) 
       i18n.init({
         resGetPath: window.location.origin+ window.location.pathname + 'app/locales/__lng__/__ns__.json',
         getAsync: false,
-        lng: language || 'en' //navigator.language || navigator.userLanguagenavigator.language || navigator.userLanguage
+        lng: language || 'fr' //navigator.language || navigator.userLanguagenavigator.language || navigator.userLanguage
       });
     },
 

@@ -21,13 +21,13 @@ define([
   'ns_grid/customCellRenderer/dateTimeRenderer',
   'ns_modules/ns_bbfe/bbfe-objectPicker/bbfe-objectPicker',
 
-  'moment',
+
   'i18n'
 
 ], function($, _, Backbone, Marionette, AgGrid, Swal,
   CustomTextFilter, CustomNumberFilter, CustomDateFilter, CustomSelectFilter,
   CustomTextAutocompleteFilter, utils_1, Renderers, Editors,
-  Decimal5Renderer, DateTimeRenderer, ObjectPicker,moment
+  Decimal5Renderer, DateTimeRenderer, ObjectPicker
 ) {
 
   'use strict';
@@ -213,87 +213,32 @@ define([
         var comparator = function (valueA, valueB, nodeA, nodeB, isInverted) {
           var value1;
           var value2;
-
-          if( moment(valueA, "DD/MM/YYYY HH:mm:ss", true).isValid() || moment(valueB, "DD/MM/YYYY HH:mm:ss", true).isValid()  ) { //detect date
-            //then convert it to timestamp (number)
-            if(valueA) { 
-              valueA = moment(valueA , "DD/MM/YYYY HH:mm:ss" ).valueOf();
-            }
-            if(valueB){
-              valueB = moment(valueB ,  "DD/MM/YYYY HH:mm:ss" ).valueOf();
-            }
+          if(valueA && valueA instanceof Object){
+            value1 = valueA.displayValue;
+          } else {
+            value1 = valueA;
           }
 
-          if( typeof(valueA) === 'number' || typeof(valueB) === 'number' ) { //number
-            if( !valueA && !valueB ) {
-              return 0;
-            }
-            if(!valueA) {
-              if(isInverted) {
-                return -1;
-              }
-              else {
-                return 1;
-              }
-            }
-            if(!valueB) {
-              if (isInverted) {
-                return 1;
-              }
-              else {
-                return -1;
-              }
-            }
-
-            return valueA - valueB;
+          if(valueB && valueB instanceof Object){
+            value2 = valueB.displayValue;
+          } else {
+            value2 = valueB;
           }
-          else { //string
-            if(valueA && valueA instanceof Object){
-              value1 = valueA.displayValue;
-            } else {
-              value1 = valueA;
-            }
 
-            if(valueB && valueB instanceof Object){
-              value2 = valueB.displayValue;
-            } else {
-              value2 = valueB;
-            }
+          if(!valueA){
+            value1 = '';
+          }
+          if(!valueB){
+            value2 = '';
+          }
 
-            if(!valueA){
-              value1 = '';
-            }
-            if(!valueB){
-              value2 = '';
-            }
-
-            if( value1 === '' && value2 === '' ) {
-              return 0;
-            }
-            if(value1 === '') {
-              if(isInverted) {
-                return -1;
-              }
-              else {
-                return 1;
-              }
-            }
-            if(value2 === '') {
-              if (isInverted) {
-                return 1;
-              }
-              else {
-                return -1;
-              }
-            }
-            if( value1.toLowerCase() > value2.toLowerCase() ) {
-              return 1;
-            }
-            else {
-              return -1;
-            }
+          switch(typeof value1){
+            case 'number':
+              return value1 - value2;
+            default:
+              return value1 < value2; //isInverted?
+          }
         }
-      }
         col.comparator = comparator;
 
         if(col.field == 'FK_ProtocoleType'){
@@ -1002,7 +947,7 @@ define([
             }
 
             //finaly check if empty
-            if(val != 'undefined'){
+            if(val != null && val != 'undefined' && val != ''){
               empty = false;
 
               //finaly copy node data in the object
@@ -1127,13 +1072,13 @@ define([
           var template = Backbone.Marionette.Renderer.render('app/ns_modules/ns_grid/pagination.tpl.html');
           return template
               .replace('[PAGE]', localeTextFunc('page', 'Page'))
-              .replace('[TO]', localeTextFunc('to', 'to'))
-              .replace('[OF]', localeTextFunc('of', 'of'))
-              .replace('[OF]', localeTextFunc('of', 'of'))
-              .replace('[FIRST]', localeTextFunc('first', 'First'))
-              .replace('[PREVIOUS]', localeTextFunc('previous', 'Previous'))
-              .replace('[NEXT]', localeTextFunc('next', 'Next'))
-              .replace('[LAST]', localeTextFunc('last', 'Last'));
+              .replace('[TO]', localeTextFunc('to', 'à'))
+              .replace('[OF]', localeTextFunc('of', 'sur'))
+              .replace('[OF]', localeTextFunc('of', 'sur'))
+              .replace('[FIRST]', localeTextFunc('first', 'Première Page'))
+              .replace('[PREVIOUS]', localeTextFunc('previous', 'Précédente'))
+              .replace('[NEXT]', localeTextFunc('next', 'Suivante'))
+              .replace('[LAST]', localeTextFunc('last', 'Dernière Page'));
       };
 
       AgGrid.extended = true;

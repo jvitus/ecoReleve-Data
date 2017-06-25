@@ -28,12 +28,12 @@ define([
       uiTabs: [
         {
           name: 'all',
-          label: 'All',
-        },
+          label: 'Toutes',
+        }/*,
         {
           name: 'lastImported',
           label: 'Last imported',
-        }
+        }*/
       ],
 
       formConfig: {

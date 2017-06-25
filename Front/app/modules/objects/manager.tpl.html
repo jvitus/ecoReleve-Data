@@ -3,7 +3,7 @@
 			<a class="js-link-back btn pull-left" href="#">
 	      <span class="reneco reneco-back"></span>
 	      &nbsp;
-	      <span data-i18n="button.back">Back</span>
+	      <span data-i18n="button.back">Retour</span>
   		</a>
 
   		<% if (typeof(uiTabs) !== 'undefined') { %>
@@ -36,14 +36,14 @@
 				</div>
 			<% } %>
 
-			<div class="js-filters clearfix full-height flex1 overflow-auto height-padding full-width bottom-padding"></div>
+			<div class="js-filters clearfix full-height flex1 overflow-auto height-padding full-width"></div>
 		</div>
 
 		<div class="toolbar bottom">
-			<button class="js-btn-clear btn pull-left">Clear</button>
+			<button class="js-btn-clear btn pull-left">Nettoyer</button>
 			<button class="js-btn-filter btn btn-success pull-right">
 				<span class="reneco reneco-search"></span>
-				&nbsp;Search
+				&nbsp;Chercher
 			</button>
 		</div>
 	</div>
@@ -66,11 +66,11 @@
 			<div class="pull-right">
 				<button class="js-btn-panel btn btn-success active ">
 					<span class="reneco reneco-sites"></span>
-					&nbsp;Grid
+					&nbsp;Grille
 				</button>
 				<button class="js-btn-panel btn btn-success">
 					<span class="reneco reneco-map"></span>
-					&nbsp;Map
+					&nbsp;Carte
 				</button>
 			</div>
 			<% } %>
@@ -85,7 +85,7 @@
 		<div class="toolbar bottom">
 			<button class="js-btn-export btn btn-success pull-left">
 				<span class="reneco reneco-export"></span>
-				&nbsp;Export data
+				&nbsp;Exporter les données
 			</button>
 
 
@@ -93,13 +93,13 @@
 					<a href="#<%= type %>/new" class="js-admin js-link-new btn btn-success pull-right">
 					<span class="reneco reneco-entrykey"></span>
 					&nbsp;
-					New <%= single %>
+					Nouvelle <%= single %>
 					</a>
 			<% } else { %>
 					<button class="js-admin js-btn-new btn btn-success pull-right">
 					<span class="reneco reneco-entrykey"></span>
 					&nbsp;
-					New <%= single %>
+					Nouvelle <%= single %>
 					</button>
 			<% } %>
 

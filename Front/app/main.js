@@ -71,7 +71,7 @@ require.config({
         'backbone_forms' : 'backbone-forms'
       }
   },
-  
+
   shim: {
     jquery: {
       exports: '$'
@@ -165,5 +165,5 @@ function(app, templates, Translater) {
   this.translater.dfd.done(function(){
     app.start();
   })
-  
+
 });

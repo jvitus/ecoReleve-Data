@@ -83,26 +83,26 @@ function(Marionette, NsMap, CurveGraphView, DonutGraphView, InfoView, TplGraph1,
     },
 
     onRender: function() {
-      this.initStats();
-      var isDomoInstance = config.instance ;
-      if(!isDomoInstance || (isDomoInstance != 'demo')) {
-        this.donutGraphs.render();
-      }
+    //  this.initStats();
+      // var isDomoInstance = config.instance ;
+      // if(!isDomoInstance || (isDomoInstance != 'demo')) {
+      //   this.donutGraphs.render();
+      // }
     },
 
     onShow: function(options) {
       var isDomoInstance = config.instance ;
       this.disableTiles();
 
-      if(!isDomoInstance || (isDomoInstance != 'demo')) {
-        this.ui.donuts.html(this.donutGraphs.el);
-        $('.hello').addClass('masqued');
-      } else {
+      // if(!isDomoInstance || (isDomoInstance != 'demo')) {
+      //   this.ui.donuts.html(this.donutGraphs.el);
+      //   $('.hello').addClass('masqued');
+      // } else {
         this.getUser();
         $('#siteName').addClass('masqued');
-      }
-      this.info.show(this.infoStat);
-      this.graph.show(this.curveGraph);
+      // }
+      // this.info.show(this.infoStat);
+      // this.graph.show(this.curveGraph);
 
       this.$el.i18n();
       // mobile compatibility
