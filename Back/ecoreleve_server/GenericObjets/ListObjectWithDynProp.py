@@ -194,6 +194,8 @@ class ListObjectWithDynProp():
 
             elif hasattr(self.ObjWithDynProp, objConf.Name):
                 selectable.append(objTable.c[objConf.Name])
+            #dunno how that's works....
+            selectable.append(objTable.c['Photos'])
         self.selectable = selectable
         return joinTable
 

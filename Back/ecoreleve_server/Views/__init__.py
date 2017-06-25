@@ -512,3 +512,5 @@ def add_routes(config):
                      'ecoReleve-Core/sensors/{type}/uncheckedDatas')
     config.add_route('sensors/uncheckedDatas/id_indiv/ptt',
                      'ecoReleve-Core/sensors/{type}/uncheckedDatas/{id_indiv}/{id_ptt}')
+
+    config.add_route('photos', 'ecoReleve-Core/photos')

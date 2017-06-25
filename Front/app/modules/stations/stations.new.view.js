@@ -10,13 +10,14 @@ define([
 
   'ns_form/NsFormsModuleGit',
   'ns_map/ns_map',
+  'exif-js',
 
   'i18n'
 
 ], function(
   $, _, Backbone, Marionette,
   moment, datetime, Swal,
-  NsForm, NsMap
+  NsForm, NsMap, Exif
 ){
 
   'use strict';
@@ -28,29 +29,34 @@ define([
     events: {
       'click .js-btn-current-position': 'getCurrentPosition',
       'click .js-btn-save': 'save',
+      'click .js-btn-add-photos' :'simulateClickInputFile',
 
       'focusout input[name="Dat e_"]': 'checkDate',
       'change input[name="LAT"], input[name="LON"]': 'getLatLng',
       'click .tab-link': 'displayTab',
       'change select[name="FieldWorker"]': 'checkUsers',
+      'change input[type=file]' : 'addPhoto',
     },
 
     name: 'Station creation',
 
     ui: {
       'staForm': '.js-form',
+      'inputPhoto' :'.js-photopicker-input'
     },
 
     initialize: function(options) {
       this.from = options.from;
       this.histoMonitoredSite = {};
+      this.imgFile = document.createElement("img");
+      this.flagPhoto = false;
     },
 
     onShow: function() {
       this.refrechView('#stWithCoords');
       this.map = new NsMap({
         popup: true,
-        zoom: 2,
+        zoom: 16,
         element: 'map',
       });
       this.$el.i18n();
@@ -92,7 +98,9 @@ define([
 
     updateMarkerPos: function(lat, lon) {
       if (lat && lon) {
-        this.map.addMarker(null, lat, lon);
+        var popup = this.imgFile;
+        var markerphoto = this.map.addMarker(null, lat, lon,popup);
+        markerphoto.openPopup();
       }
     },
 
@@ -139,6 +147,75 @@ define([
        this.refrechView(tabLink);
      },
 
+     addPhoto : function(e) {
+
+      this.flagPhoto = true;
+      this.readFileAndDisplayImage(this.ui.inputPhoto[0].files[0])
+      this.getExif();
+     },
+
+     getExif : function() {
+       var _this =this;
+              Exif.getData(this.ui.inputPhoto[0].files[0], function() {
+                console.log(EXIF.getAllTags(this))
+                var exifGPSLat = EXIF.getTag(this,'GPSLatitude');
+                var exifGPSLon = EXIF.getTag(this,'GPSLongitude');
+                var exifGPSAlt = EXIF.getTag(this,'GPSAltitude');
+                var exifDate = EXIF.getTag(this,'DateTimeOriginal');
+              if( exifGPSLat && exifGPSLon) {
+                var latInDeg = exifGPSLat[0] + ( exifGPSLat[1] / 60) + ( exifGPSLat[2]/3600 );
+                var longInDeg = exifGPSLon[0] + ( exifGPSLon[1] / 60) + ( exifGPSLon[2]/3600 );
+                latInDeg = parseFloat((latInDeg).toFixed(5));
+                longInDeg = parseFloat((longInDeg).toFixed(5));
+                _this.$el.find('input[name="LAT"]').val(latInDeg).change();
+                _this.$el.find('input[name="LON"]').val(longInDeg).change();
+              }
+              if ( exifGPSAlt) {
+                var altInNumber = exifGPSAlt.numerator / exifGPSAlt.denominator;
+                 _this.$el.find('input[name="ELE"]').val(parseFloat((altInNumber)).toFixed(2)).change();
+              }
+              if( exifDate ) {
+                  var date = moment(exifDate ,"YYYY:MM:DD HH:mm:SS");
+                 _this.$el.find('input[name="Date_"]').val(date.format("DD/MM/YYYY HH:mm:SS")).change();
+              }
+             });
+     },
+     readFileAndDisplayImage: function (fileImg) {
+          var _this = this;
+          var reader = new FileReader();
+  
+          //TODO add a spinner for while loading
+          reader.onloadstart = function () {
+              _this.imgFile.src = ""; /*set property of img*/
+              _this.imgFile.width = 150;
+              _this.imgFile.height = 150;
+          }
+          reader.onprogress = function (data) {
+              if (data.lengthComputable) {
+                  var progress = parseInt(((data.loaded / data.total) * 100), 10);
+                  console.log(progress);
+              }
+
+
+          }
+          reader.onloadend = function () {
+
+              _this.imgFile.src = reader.result; /*set property of img*/
+              //_this.base64Img.push(reader.result);
+              _this.imgFile.onclick =  function (event) {
+                  $(".img-responsive").attr("src",  _this.imgFile.src);
+                  $('#myModal').modal('show');
+              };                       
+              _this.imgFile.width = 150;
+              _this.imgFile.height = 150;
+          }
+          reader.readAsDataURL(fileImg);
+        },
+
+     simulateClickInputFile: function() {
+      this.ui.inputPhoto.click();
+     },
+
     refrechView: function(stationType) {
       var stTypeId;
       var _this = this;
@@ -146,12 +223,16 @@ define([
         case '#stWithCoords':
           stTypeId = 1;
           $('.js-get-current-position').removeClass('hidden');
+          $('.js-btn-add-photos').removeClass('hidden');
           break;
         case '#stWithoutCoords':
           stTypeId = 3;
           $('.js-get-current-position').addClass('hidden');
+          $('.js-btn-add-photos').addClass('hidden');
           break;
         default:
+          stTypeId = 1;
+          
           break;
       }
 
@@ -182,6 +263,8 @@ define([
 
       this.nsForm.savingSuccess =  function(model, resp) {
         _this.afterSave(model, resp);
+        
+
       };
 
       this.nsForm.savingError = function (response) {
@@ -225,17 +308,82 @@ define([
     },
 
     afterSave: function(model, resp) {
-      var id = model.get('ID');
-      if(this.from == 'release'){
-        Backbone.history.navigate('#release/' + id, {trigger: true});
-        return;
-      }else{
-        Backbone.history.navigate('#stations/' + id, {trigger: true});
+      var _this = this;
+      if (this.flagPhoto) {
+        $.when( _this.uploadPhoto( _this.imgFile.src,  _this.ui.inputPhoto[0].files[0].name,model.get('ID')) )
+        .then(
+          function() {
+           Backbone.history.navigate('#stations/' + model.get('ID'), {trigger: true});
+         },
+        function() {
+          $.ajax({
+             url: 'stations/'+model.get('ID'),
+             type: 'DELETE',
+             cache: false,
+            });
+
+        var msg = 'Le processus de sauvegarde a échoué, si cela persiste merci de contacter un admin ';
+        var type_ = 'error';
+        var title = 'Erreur lors de la sauvegarde';
+          Swal({
+            title: title,
+            text: msg,
+            type: type_,
+            showCancelButton: false,
+            confirmButtonColor: 'rgb(147, 14, 14)',
+            confirmButtonText: 'OK',
+            closeOnConfirm: true,
+          });
+        }
+
+        );
       }
+      else {
+        var id = model.get('ID');
+        if(this.from == 'release') {
+          Backbone.history.navigate('#release/' + id, {trigger: true});
+          return;
+        }
+        else {
+          Backbone.history.navigate('#stations/' + id, {trigger: true});
+        }
+
+      }
+      
     },
 
     save: function() {
-           this.nsForm.butClickSave();
+      //upload photo
+      //this.uploadPhoto(this.imgFile.src, this.ui.inputPhoto[0].files[0].name,id)
+      this.nsForm.butClickSave();
+           
+    },
+
+    uploadPhoto : function(imgBase64,fileName,idStation) {
+      return $.ajax({
+        url: 'photos',
+        type: 'POST',
+        data: {
+          base64 : imgBase64,
+          fileName: fileName,
+          idStation : idStation
+        },
+        cache: false,
+        contentType: "application/x-www-form-urlencoded",
+        //dataType: 'json',
+        // success: function(data, textStatus, jqXHR)
+        // {
+        //   //ok on renvoit vers la station créé
+        // },
+        // error: function(jqXHR, textStatus, errorThrown)
+        // {
+        //     //swal pb réseau lors de l'envoi de la photo merci de réessayer
+        // },
+        // complete: function()
+        // {
+        //     // STOP LOADING SPINNER
+        // }
+    });
     }
 
   });
