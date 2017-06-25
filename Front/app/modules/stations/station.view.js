@@ -46,11 +46,20 @@ define([
     },
 
     initialize: function(options) {
+      var _this = this;
       this.model = new this.ModelPrototype();
       this.com = new Com();
       this.model.set('id', options.id);
 
       this.model.set('stationId', options.id);
+
+      this.imgStation = document.createElement("img");
+      this.imgStation.width = 150;
+      this.imgStation.height = 150;
+      this.imgStation.onclick =  function (event) {
+                  $(".img-responsive").attr("src",  _this.imgStation.src);
+                  $('#myModal').modal('show');
+              }; 
 
       this.model.set('urlParams', {
         proto: options.proto,
@@ -73,7 +82,9 @@ define([
       }
       if(this.map){
         $.when(this.nsForm.jqxhr).then(function(){
-          _this.map.addMarker(null, this.model.get('LAT'), this.model.get('LON'));
+          _this.imgStation.src = 'photos/'+this.model.get('Photos')
+          var markerphoto = _this.map.addMarker(null, this.model.get('LAT'), this.model.get('LON'),_this.imgStation);
+          markerphoto.openPopup();
         });
       }
     },
@@ -86,12 +97,18 @@ define([
     },
 
     displayMap: function() {
+      var _this = this;
       var map = this.map = new NsMap({
-        zoom: 3,
+        zoom: 16,
         popup: true,
       });
       $.when(this.nsForm.jqxhr).then(function(){
-        map.addMarker(null, this.model.get('LAT'), this.model.get('LON'));
+
+        _this.imgStation.src = 'photos/'+this.model.get('Photos')
+      
+        var markerphoto = _this.map.addMarker(null, this.model.get('LAT'), this.model.get('LON'),_this.imgStation);
+        markerphoto.openPopup();
+
       });
     },
 
