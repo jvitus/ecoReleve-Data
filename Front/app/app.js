@@ -22,7 +22,7 @@ define([
   'ns_modules/ns_bbfe/bbfe-lon',
   'ns_modules/ns_bbfe/bbfe-lat',
   'ns_modules/ns_bbfe/bbfe-objectPicker/bbfe-objectPicker',
-  'ns_modules/ns_bbfe/bbfe-FilePicker/bbfe-FilePicker'
+  'ns_modules/ns_bbfe/bbfe-filepicker/bbfe-filepicker'
 
   ],
 
@@ -239,7 +239,7 @@ function( Marionette, LytRootView, Router, Controller,Swal,config, $, Backbone) 
             //   cancelButtonColor: 'grey',
             //   cancelButtonText: 'No',
             //   closeOnConfirm: true,
-            // }, 
+            // },
             // function(isConfirm){
             //   if (isConfirm) {
             //     var toto = Object.keys(window.formInEdition.form).map(function(key2, index2) {

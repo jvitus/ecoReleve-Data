@@ -180,13 +180,83 @@ define([
               }
              });
      },
+     updateResult : function(img, data) {
+       console.log(img);
+       console.log(data);
+     },
      readFileAndDisplayImage: function (fileImg) {
           var _this = this;
-          var reader = new FileReader();
-  
+          loadImage.parseMetaData ( fileImg,
+            function(data) {
+              var orientation = 0;
+              if (data.exif) {
+                orientation = data.exif.get('Orientation');
+                _this.imgFile.width = 150;
+                _this.imgFile.height = 150;
+              }
+              var loadingImage = loadImage(fileImg,
+                function(img) {
+                  _this.imgFile.src = img.toDataURL();
+                  _this.imgFile.onclick =  function (event) {
+                    $(".img-responsive").attr("src",  _this.imgFile.src);
+                    $('#myModal').modal('show');
+                  };
+                  _this.imgFile.width = 150;
+                  _this.imgFile.height = 150;
+                }, {
+                  orientation : orientation,
+                  canvas : true,
+                  maxHeight : ( _this.$el.height() - 110 ),
+                  maxWidth : _this.$el.width()
+                }
+              )
+          /*    loadingImage.onload = function(e) {
+                console.log("event")
+                console.log(e);
+                _this.imgFile.src = e.path[0].src;
+                _this.imgFile.onclick =  function (event) {
+                  $(".img-responsive").attr("src",  _this.imgFile.src);
+                  $('#myModal').modal('show');
+                };
+                _this.imgFile.width = 150;
+                _this.imgFile.height = 150;
+              };
+              loadingImage.onerror = function () {
+
+                console.log("error loading img")
+              }*/
+            }
+
+
+          /*  function(img,data) {
+              console.log(img);
+              _this.imgFile.src = "";
+              _this.imgFile.width = 150;
+              _this.imgFile.height = 150;
+            },
+            {
+            orientation: 1//exif.get('Orientation')
+          }*/
+          );
+      /*    loadingImage.onload = function(event,data) {
+            _this.imgFile.src = event.srcElement.src;
+            _this.imgFile.onclick =  function (event) {
+                $(".img-responsive").attr("src",  _this.imgFile.src);
+                $('#myModal').modal('show');
+            };
+            _this.imgFile.width = 150;
+            _this.imgFile.height = 150;
+          };
+          loadingImage.onerror = function () {
+
+            console.log("error loading img")
+          }*/
+          //loadingImage.onload = loadingImage.onerror = null;
+        /*  var reader = new FileReader();
+
           //TODO add a spinner for while loading
           reader.onloadstart = function () {
-              _this.imgFile.src = ""; /*set property of img*/
+              _this.imgFile.src = "";
               _this.imgFile.width = 150;
               _this.imgFile.height = 150;
           }
@@ -200,16 +270,16 @@ define([
           }
           reader.onloadend = function () {
 
-              _this.imgFile.src = reader.result; /*set property of img*/
-              //_this.base64Img.push(reader.result);
+              _this.imgFile.src = reader.result;
               _this.imgFile.onclick =  function (event) {
                   $(".img-responsive").attr("src",  _this.imgFile.src);
                   $('#myModal').modal('show');
-              };                       
+              };
               _this.imgFile.width = 150;
               _this.imgFile.height = 150;
           }
-          reader.readAsDataURL(fileImg);
+          reader.readAsDataURL(fileImg);*/
+
         },
 
      simulateClickInputFile: function() {
@@ -232,7 +302,7 @@ define([
           break;
         default:
           stTypeId = 1;
-          
+
           break;
       }
 
@@ -263,7 +333,7 @@ define([
 
       this.nsForm.savingSuccess =  function(model, resp) {
         _this.afterSave(model, resp);
-        
+
 
       };
 
@@ -313,9 +383,14 @@ define([
         $.when( _this.uploadPhoto( _this.imgFile.src,  _this.ui.inputPhoto[0].files[0].name,model.get('ID')) )
         .then(
           function() {
-           Backbone.history.navigate('#stations/' + model.get('ID'), {trigger: true});
+           $('#myPleaseWait').modal('hide');
+           setTimeout( function() {
+             Backbone.history.navigate('#stations/' + model.get('ID'), {trigger: true});
+           },1000);
+
          },
         function() {
+          $('#myPleaseWait').modal('hide');
           $.ajax({
              url: 'stations/'+model.get('ID'),
              type: 'DELETE',
@@ -349,17 +424,19 @@ define([
         }
 
       }
-      
+
     },
 
     save: function() {
       //upload photo
       //this.uploadPhoto(this.imgFile.src, this.ui.inputPhoto[0].files[0].name,id)
       this.nsForm.butClickSave();
-           
+
     },
 
     uploadPhoto : function(imgBase64,fileName,idStation) {
+      var _this = this;
+      $('#myPleaseWait').modal('show');
       return $.ajax({
         url: 'photos',
         type: 'POST',
@@ -370,6 +447,13 @@ define([
         },
         cache: false,
         contentType: "application/x-www-form-urlencoded",
+        xhr: function() {
+          var myXhr = $.ajaxSettings.xhr();
+          if(myXhr.upload){
+              myXhr.upload.addEventListener('progress',_this.progress, false);
+          }
+          return myXhr;
+        }
         //dataType: 'json',
         // success: function(data, textStatus, jqXHR)
         // {
@@ -384,7 +468,23 @@ define([
         //     // STOP LOADING SPINNER
         // }
     });
-    }
+  },
+  progress :  function (e){
+
+   if(e.lengthComputable){
+       var max = e.total;
+       var current = e.loaded;
+
+       var Percentage = (current * 100)/max;
+       if(Percentage >= 100)
+       {
+         Percentage = 100;
+       }
+       $('.progress-bar').width(Percentage+'%');
+
+
+   }
+}
 
   });
 });

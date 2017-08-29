@@ -647,7 +647,7 @@ define([
     },
 
     action: function(action, params, from){
-      if(this[action]){
+      if(this[action] && from !='map'){
         this[action](params, from);
       } else {
         console.warn(this, 'doesn\'t have ' + action + ' action');

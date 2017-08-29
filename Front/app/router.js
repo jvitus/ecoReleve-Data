@@ -17,10 +17,10 @@ define(['jquery', 'marionette', 'backbone', 'config', 'sweetAlert'],
       // 'individuals/new/:type(/)': 'newIndividual',
 
 
-      'monitoredSites/new(/)': 'newMonitoredSite',
-      'monitoredSites/:id(/)': 'monitoredSite',
-      'monitoredSites(/)': 'monitoredSites',
-      'monitoredSites/new/:type(/)': 'newMonitoredSite',
+      // 'monitoredSites/new(/)': 'newMonitoredSite',
+      // 'monitoredSites/:id(/)': 'monitoredSite',
+      // 'monitoredSites(/)': 'monitoredSites',
+      // 'monitoredSites/new/:type(/)': 'newMonitoredSite',
 
 
       // 'sensors/new/:type(/)': 'newSensor',
@@ -57,7 +57,7 @@ define(['jquery', 'marionette', 'backbone', 'config', 'sweetAlert'],
       {label: 'Observations', href: 'observations', icon: 'reneco-stations'},
       // {label: 'Individuals', href: 'individuals', icon: 'reneco-individuals'},
       // {label: 'Sensors', href: 'sensors', icon: 'reneco-sensors'},
-      {label: 'Monitored Sites', href: 'monitoredSites', icon: 'reneco-sensors'},
+      // {label: 'Monitored Sites', href: 'monitoredSites', icon: 'reneco-sensors'},
       // {label: 'Export', href: 'export', icon: 'reneco-export'},
       ]);
     },

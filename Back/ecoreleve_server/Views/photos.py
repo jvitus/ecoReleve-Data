@@ -15,10 +15,21 @@ def savephoto(request):
     base64img = request.POST['base64'].split(',')
     idStation = request.POST['idStation']
     fileName = request.POST['fileName']
+    print('on va essayer de creer le dossier et le fichier')
+    print(dbConfig['photos']['path']+'stations_'+str(idStation))
+    print(dbConfig['photos']['path']+'stations_'+str(idStation)+'\\'+str(fileName))
     try:
+        print("tentative dossier")
         if not os.path.isdir(dbConfig['photos']['path']+'stations_'+str(idStation)):
-            os.mkdir(dbConfig['photos']['path']+'stations_'+str(idStation))
-        with open(dbConfig['photos']['path']+'stations_'+str(idStation)+'\\'+str(fileName), "wb") as fh:
+            print("le dossier n'existe pas on le créé")
+            try:
+                os.mkdir(dbConfig['photos']['path']+'stations_'+str(idStation))
+            except OSError as e :
+                if e.errno != errno.EEXISTS:
+                    raise
+
+        print("tentative fichier")
+        with open(dbConfig['photos']['path']+'stations_'+str(idStation)+'/'+str(fileName), "wb") as fh:
             fh.write(base64.b64decode( base64img[1] ))
             #ratacher path a la station
             session.query(StationDb).filter(StationDb.ID == idStation).update({"Photos" : 'stations_'+str(idStation)+'\\'+str(fileName)})

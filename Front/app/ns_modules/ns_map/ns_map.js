@@ -105,11 +105,11 @@ define([
       }
     },
 
-    interaction: function(action, id){
+    interaction: function(action, id,from){
       if(this.com){
-        this.com.action(action, id);
+        this.com.action(action, id,from);
       }else{
-        this.action(action, id);
+        this.action(action, id,from);
       }
     },
 
@@ -443,9 +443,9 @@ define([
                   img.width = 150;
                   img.height = 150;
                   img.onclick =  function (event) {
-                            $(".img-responsive").attr("src",  img.src);
+                            $(".img-responsive").attr("src",  this.src);
                             $('#myModal').modal('show');
-                        };             
+                        };
                 //var imgV = img.innerHTML
                 topB.appendChild(img)
                 //infos+= imgV;
@@ -462,7 +462,7 @@ define([
             if(_this.selection && this.feature.properties.type_ !== 'station'){
               _this.interaction('singleSelection', this.feature.id);
             }
-            _this.interaction('focus', this.feature.id);
+            _this.interaction('focus', this.feature.id, 'map');
           });
 
           markerList.push(marker);
