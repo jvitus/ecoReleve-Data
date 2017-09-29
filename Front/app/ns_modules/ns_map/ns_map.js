@@ -105,11 +105,11 @@ define([
       }
     },
 
-    interaction: function(action, id){
+    interaction: function(action, id,from){
       if(this.com){
-        this.com.action(action, id);
+        this.com.action(action, id,from);
       }else{
-        this.action(action, id);
+        this.action(action, id,from);
       }
     },
 
@@ -439,15 +439,23 @@ define([
                 if (p =='photos') {
                   console.log(prop[p])
                   var img = document.createElement("img");
-                  img.src = prop[p];
-                  img.width = 150;
-                  img.height = 150;
-                  img.onclick =  function (event) {
-                            $(".img-responsive").attr("src",  img.src);
-                            $('#myModal').modal('show');
-                        };             
-                //var imgV = img.innerHTML
-                topB.appendChild(img)
+                  if( prop[p] != 'photos\\noPhotos.jpg' ) {
+                    img.src = prop[p];
+                    img.width = 150;
+                    img.height = 150;
+                    img.onclick =  function (event) {
+                      $(".img-responsive").attr("src",  this.src);
+                      $('#myModal').modal('show');
+                    };
+                    //var imgV = img.innerHTML
+                    topB.appendChild(img)
+                  }
+                  else {
+                    var noPhoto = document.createElement("b");
+                    noPhoto.innerHTML = '<b>Aucune photo pour cette station</b></br/>';
+                    topB.appendChild(noPhoto);
+                    console.log("pas de photos");
+                  }
                 //infos+= imgV;
               }
             }
@@ -462,7 +470,7 @@ define([
             if(_this.selection && this.feature.properties.type_ !== 'station'){
               _this.interaction('singleSelection', this.feature.id);
             }
-            _this.interaction('focus', this.feature.id);
+            _this.interaction('focus', this.feature.id, 'map');
           });
 
           markerList.push(marker);

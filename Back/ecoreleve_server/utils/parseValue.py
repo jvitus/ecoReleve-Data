@@ -8,7 +8,9 @@ dictVal = {
     'null': None,
     '': None,
     'true': 1,
+    'True': 1,
     'false': 0,
+    'False' : 1,
     'NULL': None,
     'None': None
 }
