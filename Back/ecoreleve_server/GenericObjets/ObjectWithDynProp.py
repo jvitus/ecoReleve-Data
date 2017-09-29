@@ -101,13 +101,16 @@ class ObjectWithDynProp(ConfiguredDbObjectMapped, DbObject):
         if (propertyName.lower() in self.GetType().DynPropNames):
             if ((propertyName not in self.__properties__
                     ) or (isEqual(self.__properties__[propertyName], value) is False)):
-
+                print(propertyName,value)
+                if value is True:
+                    value = 1
+                if value is False:
+                    value = 0
                 value = parser(value)
                 oldValueObject = None
                 if useDate is not None:
                     oldValueObject = self.getDynPropWithDate(
                         propertyName, StartDate=useDate)
-
                 self.setPropertyAtDate(propertyName, value, useDate, oldValueObject)
                 self.__properties__[propertyName] = value
             else:
