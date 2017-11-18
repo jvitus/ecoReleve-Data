@@ -2,9 +2,10 @@ define([
     'underscore',
     'jquery',
     'backbone',
+    'config',
     'backbone-forms',
     'jqueryui',
-], function(_, $, Backbone, Form
+], function(_, $, Backbone, Config, Form
 ) {
     'use strict';
     return Form.editors.AutocompleteEditor = Form.editors.Base.extend({
@@ -73,7 +74,7 @@ define([
         },
 
       getValue: function() {
-       return this.$input.attr('data_value');
+          return this.$input.attr('data_value');
       },
 
     render: function () {
@@ -82,13 +83,13 @@ define([
         var value = this.model.get(this.key);
         var data_value;
 
-        if (value && this.options.schema.options.label != this.options.schema.options.value && this.options.schema.options.object) {
-            
+        //if (value && this.options.schema.options.label != this.options.schema.options.value && this.options.schema.options.object) {
+        if (value && this.options.schema.options.object) {
             //value = null;
 
             var initValue = this.model.get(this.key);
             $.ajax({
-                url : this.options.schema.options.object+'/'+this.model.get(this.key),
+                url : Config.coreUrl + this.options.schema.options.object+'/'+this.model.get(this.key),
                 context: this,
                 success : function(data){
                     if (typeof data.fullname != 'undefined') {

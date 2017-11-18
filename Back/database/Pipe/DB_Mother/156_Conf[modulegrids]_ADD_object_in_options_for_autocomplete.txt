@@ -1,0 +1,13 @@
+DECLARE @StrToSearch VARCHAR(MAX)
+SET @StrToSearch = '{"source": "autocomplete/users/Login/ID"'
+
+UPDATE [ModuleGrids]
+SET [Options] = REPLACE([Options],@StrToSearch , @StrToSearch+', "object":"users"')
+WHERE 
+[Options] LIKE '%'+@StrToSearch+'%'
+
+
+INSERT INTO [dbo].[TVersion] (TVer_FileName,TVer_Date,TVer_DbName) VALUES ('156_Conf[modulegrids]_ADD_object_in_options_for_autocomplete',GETDATE(),(SELECT db_name()))
+
+
+GO
