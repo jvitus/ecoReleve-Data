@@ -196,6 +196,10 @@ class ListObjectWithDynProp():
                 selectable.append(objTable.c[objConf.Name])
             #dunno how that's works....
             selectable.append(objTable.c['Photos'])
+            print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
+            print(objTable.c['ID'])
+            print("ùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùùù")
+            selectable.append(objTable.c['ID'])
         self.selectable = selectable
         return joinTable
 

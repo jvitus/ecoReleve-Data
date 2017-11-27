@@ -279,7 +279,8 @@ define([
       legend.onAdd = function (map) {
 
         var div = L.DomUtil.create('div', 'info-legend');
-        var types = ['station', 'gps', 'argos'];
+        //var types = ['station', 'gps', 'argos'];
+        var types = ['Données', 'Photos'];
         var labels = [];
 
         for (var i = 0; i < types.length; i++) {
@@ -405,6 +406,12 @@ define([
             case 'argos':
               className += ' marker-argos';
               break;
+            case 'Photos':
+              className += ' marker-Photos';
+              break;
+            case 'Données':
+              className += ' marker-Données';
+              break;
             default:
           }
 
@@ -427,8 +434,16 @@ define([
           if(_this.popup){
             prop = feature.properties;
             var topB = document.createElement("b");
+            for(var p in prop) {
+              if( p == 'ID') {
+                var newA = document.createElement("a");
+                newA.innerHTML = "Voir Détails<br>";
+                newA.href = "http://vps406512.ovh.net/ecorelevedata/#stations/"+prop[p];
+                topB.appendChild(newA);
+              }
+            }
             for(var p in prop){
-              if (p !='photos') {
+              if (p !='photos' && p !='ID' && p != 'type_' ) {
                var newB = document.createElement("b");
                newB.innerHTML = '<b>'+p+' : '+prop[p]+'</b><br />'
                topB.appendChild(newB)
@@ -437,7 +452,6 @@ define([
             }
             for (var p in prop) {
                 if (p =='photos') {
-                  console.log(prop[p])
                   var img = document.createElement("img");
                   if( prop[p] != 'photos\\noPhotos.jpg' ) {
                     img.src = prop[p];
@@ -450,12 +464,13 @@ define([
                     //var imgV = img.innerHTML
                     topB.appendChild(img)
                   }
-                  else {
+                /*  else {
                     var noPhoto = document.createElement("b");
                     noPhoto.innerHTML = '<b>Aucune photo pour cette station</b></br/>';
                     topB.appendChild(noPhoto);
                     console.log("pas de photos");
-                  }
+                  }*/
+
                 //infos+= imgV;
               }
             }
@@ -750,6 +765,12 @@ define([
           break;
         case 'argos':
           className += ' marker-argos';
+          break;
+        case 'Photos':
+          className += ' marker-Photos';
+          break;
+        case 'Données':
+          className += ' marker-Données';
           break;
         default:
       }

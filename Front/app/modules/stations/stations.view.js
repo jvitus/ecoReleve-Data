@@ -82,6 +82,7 @@ define([
     displayMap: function() {
       this.map = new NsMap({
         url: this.model.get('type') + '/?geo=true',
+        legend : true,
         cluster: true,
         com: this.com,
         zoom: 3,

@@ -59,7 +59,7 @@ define([
       this.imgStation.onclick =  function (event) {
                   $(".img-responsive").attr("src",  _this.imgStation.src);
                   $('#myModal').modal('show');
-              }; 
+              };
 
       this.model.set('urlParams', {
         proto: options.proto,
@@ -104,10 +104,16 @@ define([
       });
       $.when(this.nsForm.jqxhr).then(function(){
 
+
+      if( this.model.get('Photos') == null ) {
+        var markerphoto = _this.map.addMarker(null, this.model.get('LAT'), this.model.get('LON'),null);
+      }
+      else {
         _this.imgStation.src = 'photos/'+this.model.get('Photos')
-      
         var markerphoto = _this.map.addMarker(null, this.model.get('LAT'), this.model.get('LON'),_this.imgStation);
         markerphoto.openPopup();
+
+      }
 
       });
     },

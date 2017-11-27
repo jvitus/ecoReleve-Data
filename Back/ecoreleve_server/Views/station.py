@@ -200,17 +200,21 @@ class StationsView(DynamicObjectCollectionView):
             for row in result:
                 if row['Photos'] is not None:
                     pathPhoto = 'photos\\'+str(row['Photos'])
+                    typeStation = 'Photos'
                 else :
                     pathPhoto = 'photos\\'+str("noPhotos.jpg")
+                    typeStation = 'Données'
                 geoJson.append({
                     'type': 'Feature',
                     'properties': {
                         'name': row['Name'],
                         'date': row['StationDate'],
-                        'photos': pathPhoto
+                        'photos': pathPhoto,
+                        'ID' : row['ID'],
+                        'type_' : typeStation
                         },
                     'geometry': {
-                        'type': 'Point',
+                        'type': typeStation,
                         'coordinates': [row['LAT'], row['LON']]}
                 })
         data = {'type': 'FeatureCollection',

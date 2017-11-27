@@ -41,7 +41,7 @@ def autocomplete(request):
                         table.c['ValueString'].label('value')]
                        ).distinct(table.c['ValueString']
                                   ).where(table.c['FK_' + objName + 'DynProp'] == prop)
-        query = query.where(table.c['ValueString'].like('%' + criteria + '%')
+        query = query.where(table.c['ValueString'].ilike('%' + criteria + '%')
                             ).order_by(asc(table.c['ValueString']))
     else:
         if NameValReturn is None:
@@ -50,7 +50,7 @@ def autocomplete(request):
         query = select([table.c[NameValReturn].label('value'),
                         table.c[prop].label('label')]
                        ).distinct(table.c[prop])
-        query = query.where(table.c[prop].like(
+        query = query.where(table.c[prop].ilike(
             '%' + criteria + '%')).order_by(asc(table.c[prop]))
 
     return [dict(row) for row in session.execute(query).fetchall()]

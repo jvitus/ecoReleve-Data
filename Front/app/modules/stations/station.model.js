@@ -15,10 +15,10 @@ define([
       type: 'stations',
 
       uiGridConfs: [
-        {
+      /*  {
           name: 'details',
           label: 'Details'
-        },
+        },*/
         {
           name: 'protocols',
           label: 'Protocols'

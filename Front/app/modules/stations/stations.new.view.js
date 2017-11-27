@@ -99,8 +99,8 @@ define([
     updateMarkerPos: function(lat, lon) {
       if (lat && lon) {
         var popup = this.imgFile;
-        var markerphoto = this.map.addMarker(null, lat, lon,popup);
-        markerphoto.openPopup();
+        this.markerPhoto = this.map.addMarker(null, lat, lon,popup);
+        this.markerPhoto.openPopup();
       }
     },
 
@@ -144,6 +144,7 @@ define([
        $('.tab-ele').removeClass('active');
        $(ele).parent().addClass('active');
        $(tabLink).addClass('active in');
+       this.map.map.removeLayer(this.markerPhoto._leaflet_id)
        this.refrechView(tabLink);
      },
 
@@ -169,6 +170,24 @@ define([
                 longInDeg = parseFloat((longInDeg).toFixed(5));
                 _this.$el.find('input[name="LAT"]').val(latInDeg).change();
                 _this.$el.find('input[name="LON"]').val(longInDeg).change();
+              }
+              else {
+                  _this.$el.find('input[name="LAT"]').addClass('error');
+                  _this.$el.find('input[name="LON"]').addClass('error');
+                  _this.$el.find('input[name="LAT"]').focus();
+
+              var  msg = 'La photo ne contient pas de coordonnées GPS dans ses metadonnées\n Vous devez renseigner les valeurs pour les champs latitude longitude';
+              var  type_ = 'warning';
+              var  title = 'Pas de coordonnées';
+                Swal({
+                  title: title,
+                  text: msg,
+                  type: type_,
+                  showCancelButton: false,
+                  confirmButtonColor: 'rgb(147, 14, 14)',
+                  confirmButtonText: 'OK',
+                  closeOnConfirm: true,
+                });
               }
               if ( exifGPSAlt) {
                 var altInNumber = exifGPSAlt.numerator / exifGPSAlt.denominator;
