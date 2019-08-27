@@ -11,17 +11,13 @@ from ecoreleve_server.core import RootCore, dbConfig
 from ecoreleve_server.core.base_resource import CustomResource
 from ..permissions import context_permissions
 
+
 class DashboardResource(CustomResource):
 
     __acl__ = context_permissions['dashboard']
 
     def getAvailableSpace(self):
-        data = {}
-        ( total , used, free) = shutil.disk_usage(dbConfig['camTrap']['path'])
-        data['total'] = str(total)
-        data['used'] = str(used)
-        data['free'] = str(free)
-        return data
+        return self.request.registry.globalNAS.getAvailableSpace('camtrap')
 
     def imgProcess(self):
         # print(self.request)
