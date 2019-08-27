@@ -493,7 +493,7 @@ class SensorDatasByType(CustomResource):
         cmdMetaDataInfo = buildCmdMetaDatasAtImport(self,metaDataInfo)
         flagDate = False
         flagError = False
-        pathPrefix = dbConfig['camTrap']['path']
+        pathPrefix = self.request.registry.globalNAS.NASObjServices [ 'camtrap' ] [ 'url' ]
         pathPost = str(self.request.POST['path'])
         jetLag = {}
         jetLag['operator'] = str( self.request.POST['jetLagOperator'] )
@@ -659,7 +659,7 @@ class SensorDatasByType(CustomResource):
         messageUnzip = ""
         nbInZip = 0
         nbInserted = 0
-        pathPrefix = dbConfig['camTrap']['path']
+        pathPrefix = self.request.registry.globalNAS.NASObjServices [ 'camtrap' ] [ 'url' ]
         self.request.response.status_code = 200
         self.request.response.text = 'ok'
         # create folder
@@ -785,7 +785,7 @@ class SensorDatasByType(CustomResource):
         # return res
 
     def checkChunk(self):
-        pathPrefix = dbConfig['camTrap']['path']
+        pathPrefix = self.request.registry.globalNAS.NASObjServices [ 'camtrap' ] [ 'url' ]
         self.request.params.get('criteria', None)
         # fileName = str(self.request.params.get('resumableIdentifier'))+"_"+str(self.request.params.get('resumableChunkNumber'))
         fileName = str(self.request.params.get('resumableFilename'))

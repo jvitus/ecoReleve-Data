@@ -78,6 +78,7 @@ class MediasFilesResource(CustomResource):
     __acl__ = context_permissions['mediasfiles']
 
     def upload(self):
+        NASPath = self.request.registry.globalNAS.NASObjServices [ 'mediafiles' ] [ 'url' ]
         if self.request.POST and 'fileBin' in self.request.POST and 'FK_Station' in self.request.POST: 
             FK_Station = self.request.POST['FK_Station']
             fileBin = self.request.POST['fileBin']
@@ -90,7 +91,7 @@ class MediasFilesResource(CustomResource):
             else:
                 try :
                     newMedia = MediasFiles(
-                        Path = os.path.join(dbConfig['mediasFiles']['path'],FK_Station),
+                        Path = os.path.join( NASPath ,FK_Station),
                         Name= fileName,
                         Extension= fileName.split('.')[-1],
                         Creator = self.request.authenticated_userid['iss'],
@@ -108,8 +109,9 @@ class MediasFilesResource(CustomResource):
     def createFile(self, FK_Station, fileBin):
         status = False
         errorMsg = None
-        absolutePath = os.path.join( dbConfig['mediasFiles']['path'],FK_Station)
-        absolutePathForFile = os.path.join( dbConfig['mediasFiles']['path'],FK_Station, fileBin.filename)
+        NASPath = self.request.registry.globalNAS.NASObjServices [ 'mediafiles' ] [ 'url' ]
+        absolutePath = os.path.join( NASPath ,FK_Station)
+        absolutePathForFile = os.path.join( NASPath ,FK_Station, fileBin.filename)
         fileName = fileBin.filename
         if os.path.isfile(absolutePathForFile):
             try:

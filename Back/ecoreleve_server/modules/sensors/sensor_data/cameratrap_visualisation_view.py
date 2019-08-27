@@ -131,6 +131,7 @@ def getSessionZip(request):
     fileNameReturned = 'All_Sessions_'
     sessionid = 0
     siteid = 0
+    NASPath = self.request.registry.globalNAS.NASObjServices [ 'camtrap' ] [ 'url' ]
 
     viewTable = Table('V_dataCamTrap_With_equipSite',
                         Base.metadata, autoload=True)
@@ -200,7 +201,8 @@ def getSessionZip(request):
         if folderName not in listFolderName :
             listFolderName.append(folderName)
 
-    fileName = os.path.join(dbConfig['camTrap']['path'],'export',fileNameReturned) 
+    
+    fileName = os.path.join( NASPath , 'export' , fileNameReturned) 
 
     randomSuffix = str(uuid.uuid4())
     '''
@@ -212,7 +214,7 @@ def getSessionZip(request):
         # zip file doesn't exist we gen it
         zipFile = zipfile.ZipFile(fileName+randomSuffix+'.zip', 'w')
         sizeListFolder = len(listFolderName)
-        for root, dirs, files in os.walk(os.path.join( dbConfig['camTrap']['path'])) :
+        for root, dirs, files in os.walk( os.path.join( NASPath ) ) :
             absRoot = root.split('\\')[-1]
             for i in range(0,sizeListFolder):        
                 if absRoot == listFolderName[i]:
