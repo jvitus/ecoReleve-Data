@@ -1,77 +1,123 @@
 import os,sys
+import shutil
 import errno
 
 
-def initialize_cameratrap_path(dbConfig, settings):
-    addCamTrapModule(settings, dbConfig)
-    addMediaFileModule(settings, dbConfig)
+def initialize_cameratrap_path( dbConfig, settings ):
+    return NASHandleLogic ( settings )
 
+class NASHandleLogic():
 
-def addCamTrapModule(settings, dbConfig):
-    dbConfig['camTrap'] = {}
-    if 'camTrap.path' in settings:
-        dbConfig['camTrap']['path'] = settings['camTrap.path']
-    else :
-        print("camera trap module not activated")    
-        return
-
-    if(os.path.exists(dbConfig['camTrap']['path']) ):
-        try :
-            os.access( dbConfig['camTrap']['path'], os.W_OK)
-            print("folder : %s exist" %(dbConfig['camTrap']['path']))
-        except :
-            print("app cant write in this directory ask your admin %s" %(dbConfig['camTrap']['path']) )
-            raise
-            #declenché erreur
-    else:
-        print ("folder %s doesn't exist we gonna try to create it" %(dbConfig['camTrap']['path']))
-        try:
-            os.makedirs(dbConfig['camTrap']['path'])
-            print("folder created : %s" %(dbConfig['camTrap']['path']))
-            os.makedirs(os.path.join(dbConfig['camTrap']['path'],'export'))
-            print("folder created : %s" %(os.path.join(dbConfig['camTrap']['path'],'export')))
-        except OSError as exception:
-            if exception.errno != errno.EEXIST:
-                raise
+    NASObjServices = {}
     
-    if(os.path.exists(os.path.join(dbConfig['camTrap']['path'],'export')) ):
-        try :
-            os.access( os.path.join(dbConfig['camTrap']['path'],'export'), os.W_OK)
-            print("folder : %s exist" %(os.path.join(dbConfig['camTrap']['path'],'export')))
-        except :
-            print("app cant write in this directory ask your admin %s" %(os.path.join(dbConfig['camTrap']['path'],'export')) )
-            raise
-            #declenché erreur
-    else:
-        print ("folder %s doesn't exist we gonna try to create it" %(os.path.join(dbConfig['camTrap']['path'],'export')))
-        try:
-            os.makedirs(os.path.join(dbConfig['camTrap']['path'],'export'))
-            print("folder created : %s" %(os.path.join(dbConfig['camTrap']['path'],'export')))
-        except OSError as exception:
-            if exception.errno != errno.EEXIST:
-                raise
+    servicesNameMapping = {
+        'camtrap' : 'camTrap.path' ,
+        'mediafiles' : 'mediasFiles.path'
+    }
+    
+    optionsServices = {
+        'camtrap' : {
+            'subDirectories' : ['export']
+        },
+        'mediafiles' : {
+            'subDirectories' : None
+        }
+    }
 
+    def __init__ ( self, settings ):
 
-def addMediaFileModule(settings, dbConfig):
-    dbConfig['mediasFiles'] = {}
-    dbConfig['mediasFiles']['path'] = settings['mediasFiles.path']
-    if dbConfig['mediasFiles'] == {}:
-        print("media files protocole not activated")
-        raise SystemExit
-        return
-    if(os.path.exists(dbConfig['mediasFiles']['path']) ):
-        try :
-            os.access( dbConfig['mediasFiles']['path'], os.W_OK)
-            print("folder : %s exist" %(dbConfig['mediasFiles']['path']))
-        except :
-            print("app cant write in this directory ask your admin %s" %(dbConfig['mediasFiles']['path']) )
-            raise
-            #declenché erreur
-    else:
-        print ("folder %s doesn't exist we gonna try to create it" %(dbConfig['mediasFiles']['path']))
-        try:
-            os.makedirs(dbConfig['mediasFiles']['path'])
-            print("folder created : %s" %(dbConfig['mediasFiles']['path']))
-        except OSError as exception:
-            if exception.errno != errno.EEXIST:
+        self.initServices ( self.servicesNameMapping, settings )
+        self.testAllServices ( )
+        print("camtrap", self.getAvailableSpace ( 'camtrap' ) )
+        print("mediafiles", self.getAvailableSpace ( 'mediafiles' ) )
+        print("result")
+    
+    def initServices ( self, servicesName, settings ):
+        for key in servicesName:
+            newService = self.createAService( key, settings )
+            self.NASObjServices.update( newService )      
+
+    def createAService ( self, key, settings ):
+        nameMapping = self.servicesNameMapping [ key ] 
+        if nameMapping in settings :
+            return {
+                key : {
+                    'url' : settings [ nameMapping ],
+                    'exist' : None,
+                    'hasAccess': None
+                }
+            }
+        else :
+            print( "something goes wrong ", nameMapping, "key is not present in settings" )
+            return {}
+    
+    def testAllServices ( self ):
+        for serviceName in self.NASObjServices:
+            self.testExists ( serviceName )
+            self.testRightsAcess ( serviceName )
+            item = self.NASObjServices [ serviceName ]
+            if item [ 'hasAccess' ] :
+                if item [ 'exist' ] is not None and item [ 'exist' ] is not True:
+                    pathTmp = item [ 'url' ]
+                    self.createDir ( pathTmp )
+                self.configureServiceWithOptions(serviceName)
+            else:
+                print( "Warning !!! it seem's that the user launching the application doesn't have access to :" )  
+                print( "url :",item [ 'url' ], " please look in the *.ini file and check key :", self.servicesNameMapping [ serviceName ])
+                print( "Then if the path is good for you, check right's access ")
+
+    def testExists ( self , serviceName ):
+        serviceItem = self.NASObjServices[ serviceName ]
+        path = serviceItem [ 'url' ]
+        serviceItem [ 'exist' ] = self.pathExists ( path )
+    
+    def pathExists (self, path ):
+        return os.path.exists(path)
+
+    def testRightsAcess ( self, serviceName ):
+        serviceItem = self.NASObjServices [ serviceName ]
+        path = serviceItem [ 'url' ]
+        serviceItem [ 'hasAccess' ] = self.hasAccess ( path )
+    
+    def hasAccess ( self, path ):
+        return os.access( path , os.W_OK ) 
+
+    def createDir ( self, path ):
+        if not self.pathExists( path ):
+            try:
+                print( "we try to create folder :" , path)
+                os.makedirs ( path )
+                print( "Creation : Ok")
+            except Exception as e:
+                print ( "Creation : Failed", e )
                 raise
+        else:
+            print( "skip creation : " , path , "still exist" )
+
+    def configureServiceWithOptions ( self, serviceName ):
+        if serviceName in self.optionsServices:
+            optionsTmp = self.optionsServices [ serviceName ]
+            if 'subDirectories' in optionsTmp and optionsTmp [ 'subDirectories' ] is not None and optionsTmp [ 'subDirectories' ] != [] :
+                rootDir = self.NASObjServices  [ serviceName ] [ 'url' ]
+                subDirList = optionsTmp [ 'subDirectories' ]
+                self.createSubDirectoriesFromRoot ( rootDir , subDirList )
+
+    def createSubDirectoriesFromRoot ( self, rootDir, listDir ):
+        for item in listDir:
+            self.createDir ( os.path.join ( rootDir , item ) )
+
+    def serviceIsOnline ( self, serviceName ):
+        urlToTest = self.NASObjServices [ serviceName ] [ 'url' ]
+        toRet = self.testExists( urlToTest )
+        self.NASObjServices [ serviceName ] [ 'status' ] = toRet
+        return toRet
+
+    def getAvailableSpace ( self, serviceName ):
+        path = self.NASObjServices [serviceName] ['url']
+        ( total , used, free) = shutil.disk_usage ( path )
+        return {
+            'total' : str(total),
+            'used' : str(used),
+            'free' : str(free)
+        }
+        
