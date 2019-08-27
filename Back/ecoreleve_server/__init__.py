@@ -96,7 +96,7 @@ def main(global_config, **settings):
     else:
         initialize_exiftool()
     config.add_subscriber(add_cors_headers_response_callback, NewRequest)
-    initialize_cameratrap_path(dbConfig, settings)
+    config.registry.globalNAS =  initialize_cameratrap_path(dbConfig, settings)
     loadThesaurusTrad(config)
     add_routes(config)
     config.scan()
