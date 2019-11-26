@@ -22,7 +22,7 @@ define([
 
       disabledNew: true,
       authorisationLvl: {
-        create_new: 'js-admin',
+        create_new: 'js-Administrateur',
       },
 
       formConfig: {

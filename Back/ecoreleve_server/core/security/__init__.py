@@ -7,31 +7,35 @@ from .. import Base, get_redis_con
 
 localRedis = get_redis_con()
 
-USERS = {2: 'superUser',
-         3: 'user',
-         1: 'admin'}
+USERS = {
+            1   :   'Administrateur',
+            2   :   'superUser',
+            3   :   'user'
+        } 
 
-GROUPS = {'superUser': ['group:superUser'],
-          'user': ['group:user'],
-          'admin': ['group:admin']}
+GROUPS = {
+        'Administrateur'    : ['group:Administrateur'],
+        'superUser'         : ['group:superUser'],
+        'user'              : ['group:user']
+        }
 
 
 def groupfinder(userid, request):
     role = []
     claims = request.authenticated_userid
-    if 'app_roles' in claims and 'ecoreleve' in claims['app_roles']:
-        role = request.authenticated_userid['app_roles']['ecoreleve']
 
-    if not role:
-        session = request.dbsession
-        Tuser_role = Base.metadata.tables['VUser_Role']
-        query_check_role = select([Tuser_role.c['role']]).where(
-            Tuser_role.c['userID'] == int(userid))
-        currentUserRoleID = session.execute(query_check_role).scalar()
+    ##FIX
+    # we can access to registry.settings everywhere in app 
+    # IF IT'S FOR READ!!!!! IT'S OK 
+    ##
 
-        if currentUserRoleID in USERS:
-            currentUserRole = USERS[currentUserRoleID]
-            role = GROUPS.get(currentUserRole, [])
+    instanceNameApp = request.registry.settings.get('RENECO.SECURITE.TIns_Label')
+    instanceNameApp = instanceNameApp.encode('latin1').decode('utf-8') # youhouuu vive les accents!!!!!
+
+    if 'roles' in claims and instanceNameApp in claims['roles']:
+        curRole = request.authenticated_userid['roles'][instanceNameApp]
+        role = GROUPS.get(curRole)
+
     return role
 
 def include_jwt_policy(config):
