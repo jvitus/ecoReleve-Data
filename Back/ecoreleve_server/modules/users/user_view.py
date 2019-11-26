@@ -34,36 +34,23 @@ def current_user(request, user_id=None):
     """
     session = request.dbsession
 
+    authenticatedTmp = request.authenticated_userid
+
     if user_id is not None:
         userid = user_id
     else:
-        userid = int(request.authenticated_userid['iss'])
+        userid = int(authenticatedTmp['iss'])
     currentUserRole = groupfinder(userid, request)
 
-    query = select([
-        User.id.label('PK_id'),
-        User.Login.label('fullname'),
-        User.Firstname.label('Firstname'),
-        User.Language.label('Language'),
-        User.Lastname.label('Lastname')
-    ]).where(User.id == userid)
-    response = dict(session.execute(query).fetchone())
+    response = {
+        'PK_id'     : int(authenticatedTmp['iss']),
+        'fullname'  : authenticatedTmp['username'],
+        'Language'  : authenticatedTmp['userlanguage']
+    }
     response['role'] = currentUserRole[0].replace('group:', '')
-
-    if 'app_roles' not in request.authenticated_userid:
-        response = setRoleInCookie(request, response, currentUserRole)
     return response
 
 
-def setRoleInCookie(request, body, role):
-    user_infos = request.authenticated_userid
-
-    claims = user_infos
-    claims['app_roles'] = {'ecoreleve': role}
-    jwt = make_jwt(request, claims)
-    response = Response(body=json.dumps(body), content_type='text/plain')
-    remember(response, jwt)
-    return response
 
 def make_jwt(request, claims):
     policy = request.registry.queryUtility(IAuthenticationPolicy)
