@@ -19,43 +19,21 @@ from webargs.pyramidparser import parser
 from ecoreleve_server.utils.decorator import timing
 
 
-class Validate(MetaEmptyNodeRessource):
-    '''
-    it's dirty but need to deliver fast and i don't really know
-    how to handle this in RESTFUll way
-
-    Validate is a special feature
-
-    That's mix Equipment, Sensor and Individual
-    Why?
-    Because we collect datas by Sensor Unicidentifier
-    and put every datas in locations Table (TargosGps or Tgsm) in SENSOR Database
-
-    In ERD we just want location attached to a session and an individual
-    and imported them in Individual_Locations
-
-    '''
-    __acl__ = context_permissions['formbuilder']
-
-    def __getitem__(self,name):
-        if name == 'argos':
-            return ARGOSValidate(name=name, parent=self, request=self.request)
-        if name == 'gsm':
-            return GSMValidate(name=name, parent=self, request=self.request)
-        else:
-            raise KeyError
-
-
-
+class ARGOSItem(MetaItemRessource):
+    pass
 
 class ARGOSValidate(MetaCollectionRessource):
     __acl__ = context_permissions['formbuilder']
     dbModel = ArgosGps
 
+    __ROUTES__ = {
+        '{int}': ARGOSItem
+    }
+
     # this is the default query for retrieve ARGOSvalidate data
     defaultParams = {
-        'checked': 0,
-        'Status' : 'ok'
+        'checked':  0,
+        'Status':   'ok'
     }
 
     # parser is a decorator from webargs library
@@ -169,6 +147,31 @@ class GSMValidate(MetaCollectionRessource):
 
     def retrieve(self):
         return ' alors on veut retrieve les données GSM a valider ????'
+
+
+class Validate(MetaEmptyNodeRessource):
+    '''
+    it's dirty but need to deliver fast and i don't really know
+    how to handle this in RESTFUll way
+
+    Validate is a special feature
+
+    That's mix Equipment, Sensor and Individual
+    Why?
+    Because we collect datas by Sensor Unicidentifier
+    and put every datas in locations Table (TargosGps or Tgsm) in SENSOR Database
+
+    In ERD we just want location attached to a session and an individual
+    and imported them in Individual_Locations
+
+    '''
+    __acl__ = context_permissions['formbuilder']
+
+    __ROUTES__ = {
+        'argos': ARGOSValidate,
+        'gsm': GSMValidate
+    }
+
 
 
 
