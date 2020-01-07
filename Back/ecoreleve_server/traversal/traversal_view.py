@@ -8,17 +8,28 @@ class TraversalRESTView(object):
         self.context = context
 
     @view_config(request_method='GET', renderer='json', permission='read')
-    def get(self):
+    def index(self):
+        return self.context.retrieve()
+
+    @view_config(request_method='HEAD', renderer='json', permission='read')
+    def head(self):
         return self.context.retrieve()
 
     @view_config(request_method='POST', renderer='json', permission='create')
     def post(self):
         return self.context.create()
 
-
     @view_config(request_method='DELETE', renderer='json', permission='delete')
     def delete(self):
         return self.context.delete()
+
+    # @view_config(request_method='OPTIONS', renderer='json', permission='read')
+    # def options(self):
+    #     return self.context.options()
+
+    @view_config(request_method='TRACE', renderer='json', permission='read')
+    def trace(self):
+        return NotImplementedError()
 
     @view_config(request_method='PATCH', renderer='json', permission='update')
     def patch(self):
