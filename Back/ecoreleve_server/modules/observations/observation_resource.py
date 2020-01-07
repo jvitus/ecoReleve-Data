@@ -40,7 +40,7 @@ class ObservationResource(DynamicObjectResource):
         curObs.values = data
         try:
             if curObs.Equipment is not None:
-                curObs.Station = curObs.Station
+                curObs.stations = curObs.stations
         except ErrorAvailable as e:
             self.session.rollback()
             self.request.response.status_code = 409
@@ -122,7 +122,7 @@ class ObservationsResource(DynamicObjectCollectionResource):
 
         try:
             curObs.values = data
-            curObs.Station = sta
+            curObs.stations = sta
             self.session.add(curObs)
             self.session.flush()
             responseBody['id'] = curObs.ID

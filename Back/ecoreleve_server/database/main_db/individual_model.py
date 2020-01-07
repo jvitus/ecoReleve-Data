@@ -59,7 +59,9 @@ class Individual (HasDynamicProperties, Main_Db_Base):
 
     _Status_ = relationship(
         'IndividualStatus', uselist=False, backref="Individual")
-    Observations = relationship('Observation')
+    observations = relationship(
+        'Observation',
+        back_populates="individuals")
 
     Status_ = association_proxy('_Status_', 'Status_')
 

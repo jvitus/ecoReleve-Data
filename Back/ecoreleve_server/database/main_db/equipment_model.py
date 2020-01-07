@@ -70,14 +70,14 @@ def checkUnequip(fk_sensor, equipDate, fk_indiv=None, fk_site=None):
         return {'unequipment_error': msg}
 
 
-@event.listens_for(Observation.Station, 'set')
+@event.listens_for(Observation.stations, 'set')
 def set_equipment(target, value=None, oldvalue=None, initiator=None):
     typeName = target._type.Name
     curSta = value
 
     if 'equipment' in typeName.lower() and typeName.lower() != 'station_equipment':
         try:
-            equipDate = target.Station.StationDate
+            equipDate = target.stations.StationDate
         except:
             equipDate = curSta.StationDate
 

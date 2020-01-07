@@ -30,7 +30,7 @@ class Observation(HasDynamicProperties, Main_Db_Base):
     moduleGridName = None
 
     FK_Station = Column(Integer, ForeignKey('Station.ID'))
-    creationDate = Column(DateTime, default=func.now())
+    # creationDate = Column(DateTime, default=func.now())
     Parent_Observation = Column(Integer, ForeignKey('Observation.ID'))
     Comments = Column(String(250))
     FK_Individual = Column(Integer, ForeignKey('Individual.ID'))
@@ -45,8 +45,15 @@ class Observation(HasDynamicProperties, Main_Db_Base):
         backref='Observation',
         cascade="all, delete-orphan",
         uselist=False)
-    Station = relationship("Station")
-    Individual = relationship('Individual')
+    stations = relationship(
+        "Station",
+        back_populates="observations"
+        )
+    individuals = relationship(
+        'Individual',
+        back_populates="observations",
+        lazy="joined",
+        innerjoin=False)
 
     @declared_attr
     def table_type_name(cls):
@@ -83,7 +90,7 @@ class Observation(HasDynamicProperties, Main_Db_Base):
     def linkedFieldDate(self):
         try:
             Station = Main_Db_Base.metadata.tables['Station']
-            if not self.Station:
+            if not self.stations:
                 linkedDate = self.session.execute(select([Station.c['StationDate']]).where(
                     Station.c['ID'] == self.FK_Station)).scalar()
             else:
